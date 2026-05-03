@@ -1,2 +1,13 @@
 # cl-csv
-(cl-csv is a temporary name because it's already taken) CSV reader and writer for Common Lisp.
+
+A CSV reader and writer for Common Lisp.
+
+## Usage
+
+```lisp
+(ql:quickload :cl-csv)
+```
+
+## License
+
+See [LICENSE](LICENSE).

@@ -338,7 +338,9 @@ Conforms to RFC 4180 §2."
      (let ((n (parse-integer token :junk-allowed t)))
        (unless n
          (error 'csv-parse-error
-                :message (format nil "Invalid position token: ~S" token)))
+                :message (format nil "Invalid position token ~S: \
+expected a 1-based number (e.g. \"5\"), a range (e.g. \"3-7\", \"3-\", \"-7\"), or \"*\""
+                                 token)))
        (cons n n)))))
 
 (defun %parse-positions (spec)
@@ -367,14 +369,33 @@ Conforms to RFC 4180 §2."
                   collect (subseq spec start i)
                   and do (setf start (1+ i)))))
 
-;;; Helper: split a string on a single delimiter character (no external deps)
-(defun split-sequence (delimiter string)
+;;; Internal helper: split STRING on every occurrence of DELIMITER char.
+;;; Named with % prefix and a distinct name to avoid conflict with the
+;;; popular cl-split-sequence / split-sequence ASDF library.
+(defun %split-on (delimiter string)
   (loop with start = 0
         for i from 0 to (length string)
         when (or (= i (length string))
                  (char= (char string i) delimiter))
           collect (subseq string start i)
           and do (setf start (1+ i))))
+
+(defun %parse-positions (spec)
+  "Parse a comma-separated list of positions/ranges into a list of conses."
+  (mapcar #'%parse-position (%split-on #\, spec)))
+
+(defun %parse-cellspec (spec)
+  "Parse a cell specification into a list of ((row-start . row-end) . (col-start . col-end))."
+  (mapcar (lambda (pair-str)
+            (let ((dash (position #\- pair-str)))
+              (unless dash
+                (error 'csv-parse-error
+                       :message (format nil "Invalid cell pair ~S: expected format row-col \
+(e.g. \"1-2\" or \"*-3\")"
+                                        pair-str)))
+              (cons (%parse-position (subseq pair-str 0 dash))
+                    (%parse-position (subseq pair-str (1+ dash))))))
+          (%split-on #\, spec)))
 
 (defun parse-fragment (fragment)
   "Parse an RFC 7111 URI fragment identifier string into a list of selector plists.
@@ -396,7 +417,7 @@ Example:
 
   (parse-fragment \"cell=1-2,3-4\")
   → ((:type :cell :pairs (((1 . 1) . (2 . 2)) ((3 . 3) . (4 . 4)))))"
-  (loop for selector-str in (split-sequence #\; fragment)
+  (loop for selector-str in (%split-on #\; fragment)
         when (> (length selector-str) 0)
           collect
           (cond

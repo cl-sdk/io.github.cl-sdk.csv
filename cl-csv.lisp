@@ -343,32 +343,6 @@ expected a 1-based number (e.g. \"5\"), a range (e.g. \"3-7\", \"3-\", \"-7\"), 
                                  token)))
        (cons n n)))))
 
-(defun %parse-positions (spec)
-  "Parse a comma-separated list of positions/ranges into a list of conses."
-  (mapcar #'%parse-position
-          (loop with start = 0
-                for i from 0 to (length spec)
-                when (or (= i (length spec))
-                         (char= (char spec i) #\,))
-                  collect (subseq spec start i)
-                  and do (setf start (1+ i)))))
-
-(defun %parse-cellspec (spec)
-  "Parse a cell specification into a list of ((row-start . row-end) . (col-start . col-end))."
-  (mapcar (lambda (pair-str)
-            (let ((dash (position #\- pair-str)))
-              (unless dash
-                (error 'csv-parse-error
-                       :message (format nil "Invalid cell pair: ~S" pair-str)))
-              (cons (%parse-position (subseq pair-str 0 dash))
-                    (%parse-position (subseq pair-str (1+ dash))))))
-          (loop with start = 0
-                for i from 0 to (length spec)
-                when (or (= i (length spec))
-                         (char= (char spec i) #\,))
-                  collect (subseq spec start i)
-                  and do (setf start (1+ i)))))
-
 ;;; Internal helper: split STRING on every occurrence of DELIMITER char.
 ;;; Named with % prefix and a distinct name to avoid conflict with the
 ;;; popular cl-split-sequence / split-sequence ASDF library.

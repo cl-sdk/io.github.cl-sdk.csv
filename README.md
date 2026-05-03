@@ -10,6 +10,27 @@ A CSV reader and writer for Common Lisp, conforming to
 (ql:quickload :cl-csv)
 ```
 
+## Running Tests
+
+The test suite uses the [Parachute](https://shinmera.github.io/parachute/)
+framework.  Parachute and its dependencies are vendored under `vendor/`
+so no additional downloads are needed.
+
+```lisp
+;; From the REPL, with the project root in ASDF's search path:
+(asdf:test-system :cl-csv)
+```
+
+Or from a shell:
+
+```sh
+sbcl --noinform \
+     --eval '(require :asdf)' \
+     --eval '(push #P"/path/to/cl-csv/" asdf:*central-registry*)' \
+     --eval '(asdf:test-system :cl-csv)' \
+     --eval '(exit)'
+```
+
 ---
 
 ## Dynamic variables

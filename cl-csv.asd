@@ -1,13 +1,10 @@
-(defun cl-csv-readme-text ()
-  (let ((readme (merge-pathnames #P"README.md" *load-truename*)))
-    (if (probe-file readme)
-        (uiop:read-file-string readme)
-        "CSV reader and writer for Common Lisp.")))
-
 (asdf:defsystem :cl-csv
   :long-name "cl-csv CSV library"
   :description "CSV reader and writer for Common Lisp"
-  :long-description #.(cl-csv-readme-text)
+  :long-description
+  "CSV reader and writer for Common Lisp with RFC 4180 parsing and writing,
+RFC 7111 fragment-identifier support, configurable separator/quote/newline
+handling, and APIs for streams, strings, and pathnames."
   :author "cl-sdk"
   :maintainer "cl-sdk"
   :license "Unlicense"

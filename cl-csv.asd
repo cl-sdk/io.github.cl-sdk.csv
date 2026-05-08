@@ -1,6 +1,6 @@
 (asdf:defsystem :cl-csv
   :long-name "CSV reader and writer for Common Lisp"
-  :description "CSV reader and writer for Common Lisp"
+  :description "CSV library for Common Lisp"
   :long-description
   #.(uiop:read-file-string
      (merge-pathnames #P"README.md" *load-truename*))

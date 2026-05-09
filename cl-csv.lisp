@@ -159,7 +159,7 @@ Parsing rules follow RFC 4180 §2:
           ;; ── Ordinary character ─────────────────────────────────────────
           (t
            (write-char ch field)
-            (setf field-active t)))))))
+           (setf field-active t)))))))
 
 (defun %skip-csv-row-p (row skip-empty-lines)
   (and skip-empty-lines
@@ -203,12 +203,12 @@ Conforms to RFC 4180 §2 (header support per RFC 4180 §3 MIME parameter)."
                   while row
                   unless (%skip-csv-row-p row skip-empty-lines)
                     collect row)))
-    (let ((rows (etypecase input
-                   (stream   (do-read input))
-                  (string   (with-input-from-string (s input)
-                              (do-read s)))
-                  (pathname (with-open-file (s input :external-format :utf-8)
-                              (do-read s))))))
+     (let ((rows (etypecase input
+                    (stream   (do-read input))
+                    (string   (with-input-from-string (s input)
+                               (do-read s)))
+                    (pathname (with-open-file (s input :external-format :utf-8)
+                               (do-read s))))))
       (if has-header
           (values (rest rows) (first rows))
           (values rows nil)))))

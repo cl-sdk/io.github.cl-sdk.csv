@@ -436,27 +436,21 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
 ;;; write-csv without has-header writes all rows as data (no header line).
 (test has-header/write-csv-no-header
   "write-csv without has-header writes data rows only"
-  (let ((output (cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil)))
-    (is (string= output (concatenate 'string
-                                     "Alice,30" (string #\Return) (string #\Newline)
-                                     "Bob,25" (string #\Return) (string #\Newline))))))
+  (is (string= (cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil)
+               (crlf "Alice,30" "Bob,25"))))
 
 ;;; write-csv with has-header list prepends the header row.
 (test has-header/write-csv-prepends-header
   "write-csv with :has-header list prepends it as the first row"
-  (let ((output (cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil
-                                  :has-header '("name" "age"))))
-    (is (string= output (concatenate 'string
-                                     "name,age" (string #\Return) (string #\Newline)
-                                     "Alice,30" (string #\Return) (string #\Newline)
-                                     "Bob,25" (string #\Return) (string #\Newline))))))
+  (is (string= (cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil
+                                 :has-header '("name" "age"))
+               (crlf "name,age" "Alice,30" "Bob,25"))))
 
 ;;; write-csv with has-header nil produces no header row.
 (test has-header/write-csv-nil-no-header-line
   "write-csv with :has-header nil produces no header row"
-  (let ((output (cl-csv:write-csv '(("a" "b")) nil :has-header nil)))
-    (is (string= output (concatenate 'string
-                                     "a,b" (string #\Return) (string #\Newline))))))
+  (is (string= (cl-csv:write-csv '(("a" "b")) nil :has-header nil)
+               (crlf "a,b"))))
 
 ;;; write-csv with has-header honours quoting options.
 (test has-header/write-csv-header-quoting

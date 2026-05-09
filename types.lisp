@@ -1,4 +1,4 @@
-(in-package :cl-csv)
+(in-package :io.github.cl-sdk.ini)
 
 (defclass csv-parser ()
   ()

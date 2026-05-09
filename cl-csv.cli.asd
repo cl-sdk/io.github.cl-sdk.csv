@@ -4,7 +4,7 @@
   :author "cl-sdk"
   :maintainer "cl-sdk"
   :license "Unlicense"
-  :depends-on (:cl-csv :uiop)
+  :depends-on (:io.github.cl-sdk.ini :uiop)
   :serial t
   :components ((:file "cl-csv-cli"))
   :build-operation "program-op"

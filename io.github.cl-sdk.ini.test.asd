@@ -1,4 +1,4 @@
-(asdf:defsystem #:cl-csv.test
+(asdf:defsystem #:io.github.cl-sdk.ini.test
   :long-name "cl-csv test suite"
   :description "Tests for cl-csv using the FiveAM test framework"
   :long-description "Regression tests for the cl-csv ASDF system."
@@ -9,5 +9,5 @@
   :bug-tracker "https://github.com/cl-sdk/cl-csv/issues"
   :source-control (:git "https://github.com/cl-sdk/cl-csv.git")
   :serial t
-  :depends-on (:cl-csv :fiveam)
+  :depends-on (:io.github.cl-sdk.ini :fiveam)
   :components ((:file "t/test")))

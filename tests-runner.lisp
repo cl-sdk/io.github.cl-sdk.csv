@@ -4,7 +4,7 @@
 
 (asdf:initialize-source-registry)
 
-(ql:quickload :cl-csv.test)
+(ql:quickload :io.github.cl-sdk.ini.test)
 
 (unless (fiveam:run-all-tests)
   (uiop:quit -1))

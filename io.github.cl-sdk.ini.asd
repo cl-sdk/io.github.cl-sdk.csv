@@ -1,4 +1,4 @@
-(asdf:defsystem #:cl-csv
+(asdf:defsystem #:io.github.cl-sdk.ini
   :long-name "cl-csv CSV library"
   :description "CSV reader and writer for Common Lisp"
   :long-description

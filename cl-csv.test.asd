@@ -1,6 +1,6 @@
-(asdf:defsystem :cl-csv.test
+(asdf:defsystem #:cl-csv.test
   :long-name "cl-csv test suite"
-  :description "Tests for cl-csv using the Parachute test framework"
+  :description "Tests for cl-csv using the FiveAM test framework"
   :long-description "Regression tests for the cl-csv ASDF system."
   :author "cl-sdk"
   :maintainer "cl-sdk"
@@ -9,7 +9,5 @@
   :bug-tracker "https://github.com/cl-sdk/cl-csv/issues"
   :source-control (:git "https://github.com/cl-sdk/cl-csv.git")
   :serial t
-  :depends-on (:cl-csv :parachute)
-  :components ((:file "t/test"))
-  :perform (test-op (op c)
-             (uiop:symbol-call :parachute :test :cl-csv.test)))
+  :depends-on (:cl-csv :fiveam)
+  :components ((:file "t/test")))

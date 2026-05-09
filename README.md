@@ -37,10 +37,10 @@ Build a standalone executable:
 
 ```sh
 ros run sbcl --noinform \
-    --eval '(require :asdf)' \
-    --eval '(push #P"/path/to/cl-csv/" asdf:*central-registry*)' \
-    --eval '(asdf:operate (quote asdf:program-op) :cl-csv.cli)' \
-    --eval '(uiop:quit)'
+     --eval '(require :asdf)' \
+     --eval '(push #P"/path/to/cl-csv/" asdf:*central-registry*)' \
+     --eval '(asdf:operate (quote asdf:program-op) :cl-csv.cli)' \
+     --eval '(uiop:quit)'
 ```
 
 This produces `cl-csv-dump` in the current directory.

@@ -131,7 +131,7 @@ Write a list of field values as one CSV row (appends `newline`).
 ; prints: Alice,30\r\n
 ```
 
-### `write-csv rows output &key separator quote newline always-quote has-header` → `string | nil`
+### `write-csv rows output &key separator quote newline always-quote headers` → `string | nil`
 
 Write all rows to `output`.
 
@@ -142,7 +142,7 @@ Write all rows to `output`.
 
 | Keyword | Default | Description |
 |---|---|---|
-| `:has-header` | `nil` | A list of field names to write as the header row before the data rows, or `nil` (the default) for no header.  When provided, the header is written first and `rows` contains only data rows. |
+| `:headers` | `nil` | A list of field names to write as the header row before the data rows, or `nil` (the default) for no header.  When provided, the header is written first and `rows` contains only data rows. |
 
 ```lisp
 ;; No header (default) — rows are plain data
@@ -151,7 +151,7 @@ Write all rows to `output`.
 
 ;; With a header passed explicitly
 (cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil
-                  :has-header '("name" "age"))
+                  :headers '("name" "age"))
 ; => "name,age\r\nAlice,30\r\nBob,25\r\n"
 ```
 

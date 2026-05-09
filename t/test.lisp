@@ -433,30 +433,30 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
     (is (= 1 (length rows)))
     (is (equal '("col1" "col2" "col3") header))))
 
-;;; write-csv without has-header writes all rows as data (no header line).
+;;; write-csv without headers writes all rows as data (no header line).
 (test has-header/write-csv-no-header
-  "write-csv without has-header writes data rows only"
+  "write-csv without :headers writes data rows only"
   (is (string= (cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil)
                (crlf "Alice,30" "Bob,25"))))
 
-;;; write-csv with has-header list prepends the header row.
+;;; write-csv with headers list prepends the header row.
 (test has-header/write-csv-prepends-header
-  "write-csv with :has-header list prepends it as the first row"
+  "write-csv with :headers list prepends it as the first row"
   (is (string= (cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil
-                                 :has-header '("name" "age"))
+                                 :headers '("name" "age"))
                (crlf "name,age" "Alice,30" "Bob,25"))))
 
-;;; write-csv with has-header nil produces no header row.
+;;; write-csv with headers nil produces no header row.
 (test has-header/write-csv-nil-no-header-line
-  "write-csv with :has-header nil produces no header row"
-  (is (string= (cl-csv:write-csv '(("a" "b")) nil :has-header nil)
+  "write-csv with :headers nil produces no header row"
+  (is (string= (cl-csv:write-csv '(("a" "b")) nil :headers nil)
                (crlf "a,b"))))
 
-;;; write-csv with has-header honours quoting options.
+;;; write-csv with headers honours quoting options.
 (test has-header/write-csv-header-quoting
   "write-csv quotes header fields that contain special characters"
   (let ((output (cl-csv:write-csv '(("1" "2")) nil
-                                  :has-header '("col,a" "col b"))))
+                                  :headers '("col,a" "col b"))))
     (is-true (search "\"col,a\"" output))))
 
 

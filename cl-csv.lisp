@@ -265,7 +265,7 @@ this function and handle the last row manually."
                                 (quote        *quote*)
                                 (newline      *newline*)
                                 (always-quote *always-quote*)
-                                (has-header   nil))
+                                (headers      nil))
   "Write CSV rows to OUTPUT.
 
 ROWS is a sequence of data rows; each row is a list of field values.
@@ -282,15 +282,15 @@ Options:
   :QUOTE        — quoting character (default *QUOTE*)
   :NEWLINE      — row-terminator string (default *NEWLINE*, i.e. CRLF)
   :ALWAYS-QUOTE — when non-NIL every field is quoted
-  :HAS-HEADER   — a list of field names to write as the header row before
+  :HEADERS      — a list of field names to write as the header row before
                   the data rows, or NIL (the default) for no header.
                   When provided, the header is written first and ROWS
                   contains only data rows.
 
 Conforms to RFC 4180 §2 (header support per RFC 4180 §3 MIME parameter)."
   (flet ((do-write (stream)
-           (when has-header
-             (write-csv-row has-header stream
+           (when headers
+             (write-csv-row headers stream
                             :separator    separator
                             :quote        quote
                             :newline      newline

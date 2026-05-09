@@ -4,7 +4,7 @@ ENV?=development
 ## on the `ql:*local-project-directories*`.
 LISP?=sbcl --sysinit ./.sbclrc
 
-LISPFLAGS=--non-interactive
+LISPFLAGS=--non-interactive --noinform
 
 .PHONY: tests cli
 tests:
@@ -15,7 +15,6 @@ tests:
 cli:
 	$(LISP) \
 	$(LISPFLAGS) \
-	--noinform \
 	--eval '(require :asdf)' \
 	--eval '(push #P"./" asdf:*central-registry*)' \
 	--eval '(asdf:operate (quote asdf:program-op) :cl-csv.cli)' \

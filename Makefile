@@ -6,8 +6,15 @@ LISP?=sbcl --sysinit ./.sbclrc
 
 LISPFLAGS=--non-interactive
 
-.PHONY: tests
+.PHONY: tests cli
 tests:
 	ENV=$(ENV) \
 	$(LISP) \
 	$(LISPFLAGS) --quit --load tests-runner.lisp
+
+cli:
+	ros run sbcl --noinform \
+	     --eval '(require :asdf)' \
+	     --eval '(push #P"./" asdf:*central-registry*)' \
+	     --eval '(asdf:operate (quote asdf:program-op) :cl-csv.cli)' \
+	     --eval '(uiop:quit)'

@@ -20,7 +20,7 @@ handling, and APIs for streams, strings, and pathnames."
   :author "cl-sdk"
   :maintainer "cl-sdk"
   :license "Unlicense"
-  :depends-on (:cl-csv)
+  :depends-on (:cl-csv :uiop)
   :serial t
   :components ((:file "cl-csv-cli"))
   :build-operation "program-op"

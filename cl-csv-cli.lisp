@@ -45,8 +45,5 @@
          1)))))
 
 (defun main ()
-  (let* ((argv #+sbcl (cdr sb-ext:*posix-argv*)
-               #-sbcl '())
-         (exit-code (run argv)))
-    #+sbcl (sb-ext:exit :code exit-code)
-    #-sbcl exit-code))
+  (let ((exit-code (run (uiop:command-line-arguments))))
+    (uiop:quit exit-code)))

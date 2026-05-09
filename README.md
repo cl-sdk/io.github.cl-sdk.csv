@@ -100,6 +100,53 @@ Bob,25" :has-header nil)
 ; Data:   ((Alice 30) (Bob 25))
 ```
 
+Stream rows as events instead of materializing the full table:
+
+```lisp
+(cl-csv:parse-csv "name,age
+Alice,30
+Bob,25"
+  (lambda (event payload)
+    (format t "~a => ~s~%" event payload)))
+;; :BEGIN-DOCUMENT => NIL
+;; :HEADER => ("name" "age")
+;; :LINE => ("Alice" "30")
+;; :LINE => ("Bob" "25")
+;; :END-DOCUMENT => NIL
+```
+
+Omit the parser argument to use the default collecting parser:
+
+```lisp
+(multiple-value-bind (rows header)
+    (cl-csv:parse-csv "name,age
+Alice,30
+Bob,25")
+  (list rows header))
+; => ((("Alice" "30") ("Bob" "25")) ("name" "age"))
+```
+
+Custom parser implementations can subclass `cl-csv:csv-parser` and define the
+event callbacks they care about:
+
+```lisp
+(defclass counting-parser (cl-csv:csv-parser)
+  ((lines :initform 0 :accessor lines)))
+
+(defmethod cl-csv:csv-parser-line ((parser counting-parser) row)
+  (declare (ignore row))
+  (incf (lines parser)))
+
+(defmethod cl-csv:csv-parser-result ((parser counting-parser))
+  (lines parser))
+
+(cl-csv:parse-csv "name,age
+Alice,30
+Bob,25"
+                  (make-instance 'counting-parser))
+; => 2
+```
+
 ---
 
 ## Writer

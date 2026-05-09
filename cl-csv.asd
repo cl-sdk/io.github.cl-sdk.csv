@@ -12,4 +12,9 @@ handling, and APIs for streams, strings, and pathnames."
   :bug-tracker "https://github.com/cl-sdk/cl-csv/issues"
   :source-control (:git "https://github.com/cl-sdk/cl-csv.git")
   :serial t
-  :components ((:file "cl-csv")))
+  :components ((:file "package")
+	       (:file "conditions")
+	       (:file "types")
+	       (:file "variables")
+	       (:file "reader")
+	       (:file "writer")))

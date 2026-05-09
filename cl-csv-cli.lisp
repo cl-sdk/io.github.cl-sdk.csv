@@ -1,6 +1,5 @@
 (defpackage :cl-csv.cli
   (:use :cl)
-  (:import-from :cl-csv #:read-csv)
   (:export #:run #:main))
 
 (in-package :cl-csv.cli)
@@ -16,17 +15,18 @@
 (defun read-rows-from-arg (arg stdin &key has-header)
   (cond
     ((or (null arg) (string= arg "-"))
-     (read-csv stdin :has-header has-header))
+     (cl-csv:parse-csv stdin :has-header has-header))
     (t
      (handler-case
-         (read-csv (pathname arg) :has-header has-header)
+	 (with-open-file (s (pathname arg))
+	  (cl-csv:parse-csv s :has-header has-header))
        (file-error ()
-         (error "Cannot read file ~S." arg))))))
+	 (error "Cannot read file ~S." arg))))))
 
 (defun run (argv &key
-                   (stdin *standard-input*)
-                   (stdout *standard-output*)
-                   (stderr *error-output*))
+		   (stdin *standard-input*)
+		   (stdout *standard-output*)
+		   (stderr *error-output*))
   "Run the CLI with ARGV (excluding program name). Returns process exit code."
   (cond
     ((member (first argv) '("--help" "-h") :test #'string=)
@@ -34,23 +34,23 @@
      0)
     (t
      (let* ((no-header-p (member "--no-header" argv :test #'string=))
-            (remaining   (remove "--no-header" argv :test #'string=))
-            (has-header  (not no-header-p)))
+	    (remaining   (remove "--no-header" argv :test #'string=))
+	    (has-header  (not no-header-p)))
        (cond
-         ((> (length remaining) 1)
-          (usage stderr)
-          2)
-         (t
-          (handler-case
-              (let* ((arg (first remaining))
-                     (rows (read-rows-from-arg arg stdin :has-header has-header))
-                     (*print-readably* t))
-                (prin1 rows stdout)
-                (terpri stdout)
-                0)
-            (error (e)
-              (format stderr "cl-csv-dump: ~A~%" e)
-              1))))))))
+	 ((> (length remaining) 1)
+	  (usage stderr)
+	  2)
+	 (t
+	  (handler-case
+	      (let* ((arg (first remaining))
+		     (rows (read-rows-from-arg arg stdin :has-header has-header))
+		     (*print-readably* t))
+		(prin1 rows stdout)
+		(terpri stdout)
+		0)
+	    (error (e)
+	      (format stderr "cl-csv-dump: ~A~%" e)
+	      1))))))))
 
 (defun main ()
   (let ((exit-code (run (uiop:command-line-arguments))))

@@ -368,16 +368,6 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
     (is (equal (cons 1 3) (first (getf (first r) :positions))))))
 
 
-;;; -----------------------------------------------------------------------
-;;; :has-header tests
-;;; -----------------------------------------------------------------------
-
-(def-suite csv-has-header
-  :description "has-header keyword for read-csv and write-csv"
-  :in cl-csv.test)
-
-(in-suite csv-has-header)
-
 ;;; Default: has-header t — second return value is the first row (header).
 (test has-header/default-returns-header-as-second-value
   "read-csv with default has-header returns the header row as second value"

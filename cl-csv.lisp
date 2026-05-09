@@ -178,15 +178,16 @@ Options:
   :SKIP-EMPTY-LINES — when non-NIL, rows consisting of a single empty
                       string are omitted from the result
   :HAS-HEADER       — when non-NIL (the default), the file is assumed to
-                      have a header record as its first row; a second
-                      return value is then the header row (a list of
-                      strings).  When NIL the file is treated as having
-                      no header and the second return value is NIL.
+                      have a header record as its first row; the second
+                      return value is that header row (a list of strings)
+                      and the primary value contains only the data rows
+                      (header excluded).  When NIL the file is treated as
+                      having no header: all rows are returned as data and
+                      the second return value is NIL.
 
-Returns two values: (rows header-or-nil).
-The primary value ROWS always contains every row that was read,
-including the header when one is present, so existing callers that
-ignore the second value are unaffected.
+Returns two values: (data-rows header-or-nil).
+When HAS-HEADER is non-NIL the header row is stripped from the primary
+value so ROWS contains only data rows.
 
 Conforms to RFC 4180 §2 (header support per RFC 4180 §3 MIME parameter)."
   (flet ((do-read (stream)
@@ -204,7 +205,9 @@ Conforms to RFC 4180 §2 (header support per RFC 4180 §3 MIME parameter)."
                               (do-read s)))
                   (pathname (with-open-file (s input :external-format :utf-8)
                               (do-read s))))))
-      (values rows (when has-header (first rows))))))
+      (if has-header
+          (values (rest rows) (first rows))
+          (values rows nil)))))
 
 
 ;;; -----------------------------------------------------------------------

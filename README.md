@@ -79,19 +79,19 @@ end-of-file.
 ### `read-csv input &key separator quote skip-empty-lines has-header` → `rows, header`
 
 Read all rows from `input` (stream, string, or pathname).  Returns two
-values: the primary value is always the complete list of rows (as with
-previous versions), and the secondary value is the header row or `nil`.
+values: the primary value is the data rows (header excluded when present),
+and the secondary value is the header row or `nil`.
 
 | Keyword | Default | Description |
 |---|---|---|
-| `:has-header` | `t` | When non-`nil`, the file is assumed to have a header record as its first row; the second return value is that row.  When `nil`, no header is expected and the second value is `nil`. |
+| `:has-header` | `t` | When non-`nil`, the file is assumed to have a header record as its first row; that row is returned as the second value and is excluded from the primary value.  When `nil`, no header is expected and the second value is `nil`. |
 
 ```lisp
-;; Default: file has a header — header returned as second value
+;; Default: file has a header — header returned as second value, excluded from rows
 (cl-csv:read-csv "name,age
 Alice,30
 Bob,25")
-; primary  => (("name" "age") ("Alice" "30") ("Bob" "25"))
+; primary  => (("Alice" "30") ("Bob" "25"))
 ; secondary => ("name" "age")
 
 ;; Convenient destructuring with multiple-value-bind
@@ -100,7 +100,7 @@ Bob,25")
 Alice,30
 Bob,25")
   (format t "Header: ~a~%" header)
-  (format t "Data:   ~a~%" (rest rows)))
+  (format t "Data:   ~a~%" rows))
 ; Header: (name age)
 ; Data:   ((Alice 30) (Bob 25))
 

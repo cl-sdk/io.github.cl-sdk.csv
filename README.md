@@ -39,7 +39,7 @@ Build a standalone executable:
 make cli
 ```
 
-This produces `cl-csv-dump` in the current directory.
+This produces `csv-to-list` in the current directory.
 
 Usage:
 

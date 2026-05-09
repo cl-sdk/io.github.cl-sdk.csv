@@ -6,4 +6,4 @@
 
 (ql:quickload :cl-csv.test)
 
-(parachute:test :cl-csv.test)
+(fiveam:run! 'cl-csv.test::cl-csv.test)

@@ -12,9 +12,8 @@ A CSV reader and writer for Common Lisp, conforming to
 
 ## Running Tests
 
-The test suite uses the [Parachute](https://shinmera.github.io/parachute/)
-framework.  Parachute and its dependencies are vendored under `vendor/`
-so no additional downloads are needed.
+The test suite uses the
+[FiveAM](https://common-lisp-libraries.readthedocs.io/fiveam/) framework.
 
 ```lisp
 ;; From the REPL, with the project root in ASDF's search path:
@@ -65,26 +64,13 @@ cat data.csv | ./cl-csv-dump
 
 ## Reader
 
-### `read-csv-row stream &key separator quote` → `list | nil`
-
-Read one row from `stream`.  Returns a list of strings, or `nil` at
-end-of-file.
+Read one row from a stream:
 
 ```lisp
 (with-input-from-string (s "a,b,c")
   (cl-csv:read-csv-row s))
 ; => ("a" "b" "c")
 ```
-
-### `read-csv input &key separator quote skip-empty-lines has-header` → `rows, header`
-
-Read all rows from `input` (stream, string, or pathname).  Returns two
-values: the primary value is the data rows (header excluded when present),
-and the secondary value is the header row or `nil`.
-
-| Keyword | Default | Description |
-|---|---|---|
-| `:has-header` | `t` | When non-`nil`, the file is assumed to have a header record as its first row; that row is returned as the second value and is excluded from the primary value.  When `nil`, no header is expected and the second value is `nil`. |
 
 ```lisp
 ;; Default: file has a header — header returned as second value, excluded from rows
@@ -118,31 +104,19 @@ Bob,25" :has-header nil)
 
 ## Writer
 
-### `write-csv-field field stream &key separator quote always-quote`
-
-Write a single field value to `stream`, quoting if necessary.
-
-### `write-csv-row row stream &key separator quote newline always-quote`
-
-Write a list of field values as one CSV row (appends `newline`).
+Write a single row:
 
 ```lisp
 (cl-csv:write-csv-row '("Alice" "30") *standard-output*)
 ; prints: Alice,30\r\n
 ```
 
-### `write-csv rows output &key separator quote newline always-quote headers` → `string | nil`
-
-Write all rows to `output`.
+Write all rows to output:
 
 * `nil`      → returns the CSV as a fresh string
 * `t`        → writes to `*standard-output*`
 * stream     → writes to that stream
 * pathname   → writes to file (UTF-8, overwrites if exists)
-
-| Keyword | Default | Description |
-|---|---|---|
-| `:headers` | `nil` | A list of field names to write as the header row before the data rows, or `nil` (the default) for no header.  When provided, the header is written first and `rows` contains only data rows. |
 
 ```lisp
 ;; No header (default) — rows are plain data
@@ -182,9 +156,7 @@ http://example.com/data.csv#col=2-4
 http://example.com/data.csv#cell=1-2,3-4
 ```
 
-### `parse-fragment fragment` → `list`
-
-Parse an RFC 7111 fragment string into a list of selector plists.
+Parse RFC 7111 fragment strings:
 
 ```lisp
 (cl-csv:parse-fragment "row=1,3-5")
@@ -195,10 +167,7 @@ Parse an RFC 7111 fragment string into a list of selector plists.
 ;     (:TYPE :ROW :POSITIONS ((1 . 1))))
 ```
 
-### `select-by-fragment rows fragment &key include-header` → `list`
-
-Apply a fragment identifier to a parsed CSV table (list of string lists).
-Row and column numbers are 1-based.
+Apply fragment identifiers to parsed CSV tables (row and column numbers are 1-based):
 
 ```lisp
 (defvar *table*

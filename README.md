@@ -39,7 +39,7 @@ Build a standalone executable:
 sbcl --noinform \
      --eval '(require :asdf)' \
      --eval '(push #P"/path/to/cl-csv/" asdf:*central-registry*)' \
-     --eval '(asdf:make :cl-csv.cli)' \
+     --eval '(asdf:operate (quote asdf:program-op) :cl-csv.cli)' \
      --eval '(exit)'
 ```
 

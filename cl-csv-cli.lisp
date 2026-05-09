@@ -17,8 +17,8 @@
     (t
      (handler-case
          (read-csv (pathname arg))
-       (error (e)
-         (error "Cannot read file ~S: ~A" arg e))))))
+       (file-error ()
+         (error "Cannot read file ~S." arg))))))
 
 (defun run (argv &key
                    (stdin *standard-input*)

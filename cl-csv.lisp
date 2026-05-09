@@ -163,7 +163,8 @@ Parsing rules follow RFC 4180 §2:
 (defun read-csv (input &key
                          (separator       *separator*)
                          (quote           *quote*)
-                         skip-empty-lines)
+                         skip-empty-lines
+                         (has-header      t))
   "Read all CSV rows from INPUT and return them as a list of string lists.
 
 INPUT may be:
@@ -172,15 +173,22 @@ INPUT may be:
   * a PATHNAME    — file opened with UTF-8 encoding
 
 Options:
-  :SEPARATOR       — field-separator character (default *SEPARATOR*)
-  :QUOTE           — quoting character (default *QUOTE*)
+  :SEPARATOR        — field-separator character (default *SEPARATOR*)
+  :QUOTE            — quoting character (default *QUOTE*)
   :SKIP-EMPTY-LINES — when non-NIL, rows consisting of a single empty
                       string are omitted from the result
+  :HAS-HEADER       — when non-NIL (the default), the file is assumed to
+                      have a header record as its first row; a second
+                      return value is then the header row (a list of
+                      strings).  When NIL the file is treated as having
+                      no header and the second return value is NIL.
 
-The first row is returned as-is; callers that treat it as a header
-record can simply destructure the result with (FIRST rows) / (REST rows).
+Returns two values: (rows header-or-nil).
+The primary value ROWS always contains every row that was read,
+including the header when one is present, so existing callers that
+ignore the second value are unaffected.
 
-Conforms to RFC 4180 §2."
+Conforms to RFC 4180 §2 (header support per RFC 4180 §3 MIME parameter)."
   (flet ((do-read (stream)
            (loop for row = (read-csv-row stream
                                          :separator separator
@@ -190,12 +198,13 @@ Conforms to RFC 4180 §2."
                              (= 1 (length row))
                              (string= "" (first row)))
                    collect row)))
-    (etypecase input
-      (stream   (do-read input))
-      (string   (with-input-from-string (s input)
-                  (do-read s)))
-      (pathname (with-open-file (s input :external-format :utf-8)
-                  (do-read s))))))
+    (let ((rows (etypecase input
+                  (stream   (do-read input))
+                  (string   (with-input-from-string (s input)
+                              (do-read s)))
+                  (pathname (with-open-file (s input :external-format :utf-8)
+                              (do-read s))))))
+      (values rows (when has-header (first rows))))))
 
 
 ;;; -----------------------------------------------------------------------
@@ -255,7 +264,8 @@ this function and handle the last row manually."
                                 (separator    *separator*)
                                 (quote        *quote*)
                                 (newline      *newline*)
-                                (always-quote *always-quote*))
+                                (always-quote *always-quote*)
+                                (has-header   t))
   "Write CSV rows to OUTPUT.
 
 ROWS is a sequence of rows; each row is a list of field values.
@@ -272,8 +282,14 @@ Options:
   :QUOTE        — quoting character (default *QUOTE*)
   :NEWLINE      — row-terminator string (default *NEWLINE*, i.e. CRLF)
   :ALWAYS-QUOTE — when non-NIL every field is quoted
+  :HAS-HEADER   — when non-NIL (the default) the first element of ROWS
+                  is treated as the header record; when NIL all rows are
+                  data rows.  This parameter is currently advisory: it
+                  documents intent and is available for callers that
+                  inspect it, but does not alter the rows that are written.
 
-Conforms to RFC 4180 §2."
+Conforms to RFC 4180 §2 (header support per RFC 4180 §3 MIME parameter)."
+  (declare (ignore has-header))
   (flet ((do-write (stream)
            (dolist (row rows)
              (write-csv-row row stream

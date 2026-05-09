@@ -6,17 +6,20 @@
 (in-package :cl-csv.cli)
 
 (defun usage (stream)
-  (format stream "Usage: cl-csv-dump [CSV-PATH|-]~%")
+  (format stream "Usage: cl-csv-dump [--no-header] [CSV-PATH|-]~%")
   (format stream "Reads CSV and prints rows as an s-expression.~%")
-  (format stream "If no path (or '-') is provided, reads from stdin.~%"))
+  (format stream "If no path (or '-') is provided, reads from stdin.~%")
+  (format stream "~%")
+  (format stream "Options:~%")
+  (format stream "  --no-header  treat the file as having no header row~%"))
 
-(defun read-rows-from-arg (arg stdin)
+(defun read-rows-from-arg (arg stdin &key has-header)
   (cond
     ((or (null arg) (string= arg "-"))
-     (read-csv stdin))
+     (read-csv stdin :has-header has-header))
     (t
      (handler-case
-         (read-csv (pathname arg))
+         (read-csv (pathname arg) :has-header has-header)
        (file-error ()
          (error "Cannot read file ~S." arg))))))
 
@@ -29,20 +32,25 @@
     ((member (first argv) '("--help" "-h") :test #'string=)
      (usage stdout)
      0)
-    ((> (length argv) 1)
-     (usage stderr)
-     2)
     (t
-     (handler-case
-         (let* ((arg (first argv))
-                (rows (read-rows-from-arg arg stdin))
-                (*print-readably* t))
-           (prin1 rows stdout)
-           (terpri stdout)
-           0)
-       (error (e)
-         (format stderr "cl-csv-dump: ~A~%" e)
-         1)))))
+     (let* ((no-header-p (member "--no-header" argv :test #'string=))
+            (remaining   (remove "--no-header" argv :test #'string=))
+            (has-header  (not no-header-p)))
+       (cond
+         ((> (length remaining) 1)
+          (usage stderr)
+          2)
+         (t
+          (handler-case
+              (let* ((arg (first remaining))
+                     (rows (read-rows-from-arg arg stdin :has-header has-header))
+                     (*print-readably* t))
+                (prin1 rows stdout)
+                (terpri stdout)
+                0)
+            (error (e)
+              (format stderr "cl-csv-dump: ~A~%" e)
+              1))))))))
 
 (defun main ()
   (let ((exit-code (run (uiop:command-line-arguments))))

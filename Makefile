@@ -4,7 +4,7 @@ ENV?=development
 ## on the `ql:*local-project-directories*`.
 LISP?=sbcl
 
-LISPFLAGS=--non-interactive --noinform
+LISPFLAGS=--noinform --non-interactive
 
 .PHONY: tests cli
 tests:

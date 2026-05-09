@@ -72,12 +72,6 @@ Read one row from a stream:
 ; => ("a" "b" "c")
 ```
 
-Read all rows from input (stream, string, or pathname):
-
-| Keyword | Default | Description |
-|---|---|---|
-| `:has-header` | `t` | When non-`nil`, the file is assumed to have a header record as its first row; that row is returned as the second value and is excluded from the primary value.  When `nil`, no header is expected and the second value is `nil`. |
-
 ```lisp
 ;; Default: file has a header — header returned as second value, excluded from rows
 (cl-csv:read-csv "name,age
@@ -123,10 +117,6 @@ Write all rows to output:
 * `t`        → writes to `*standard-output*`
 * stream     → writes to that stream
 * pathname   → writes to file (UTF-8, overwrites if exists)
-
-| Keyword | Default | Description |
-|---|---|---|
-| `:headers` | `nil` | A list of field names to write as the header row before the data rows, or `nil` (the default) for no header.  When provided, the header is written first and `rows` contains only data rows. |
 
 ```lisp
 ;; No header (default) — rows are plain data

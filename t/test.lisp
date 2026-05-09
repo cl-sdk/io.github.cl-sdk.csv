@@ -368,6 +368,90 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
     (is (equal (cons 1 3) (first (getf (first r) :positions))))))
 
 
+;;; Default: has-header t — second return value is the header; header not in rows.
+(test has-header/default-returns-header-as-second-value
+  "read-csv with default has-header returns the header row as second value only"
+  (multiple-value-bind (rows header)
+      (cl-csv:read-csv (with-crlf "name,age" "Alice,30" "Bob,25"))
+    (is (= 2 (length rows)))
+    (is (equal '("name" "age") header))))
+
+;;; Default: has-header t — primary return value contains data rows only.
+(test has-header/default-primary-value-data-only
+  "read-csv with default has-header returns only data rows as primary value"
+  (multiple-value-bind (rows header)
+      (cl-csv:read-csv (with-crlf "name,age" "Alice,30"))
+    (declare (ignore header))
+    (is (= 1 (length rows)))
+    (is (equal '("Alice" "30") (first rows)))))
+
+;;; Explicit has-header t — same as default.
+(test has-header/explicit-t
+  "read-csv with explicit has-header t returns header as second value"
+  (multiple-value-bind (rows header)
+      (cl-csv:read-csv (with-crlf "id,val" "1,a") :has-header t)
+    (is (= 1 (length rows)))
+    (is (equal '("id" "val") header))))
+
+;;; has-header nil — second return value is nil (no header).
+(test has-header/nil-returns-nil-header
+  "read-csv with has-header nil returns nil as second value"
+  (multiple-value-bind (rows header)
+      (cl-csv:read-csv (with-crlf "Alice,30" "Bob,25") :has-header nil)
+    (is (= 2 (length rows)))
+    (is (null header))))
+
+;;; has-header nil — primary return value is unchanged (all rows are data).
+(test has-header/nil-primary-value-contains-all-rows
+  "read-csv with has-header nil returns all rows as primary value"
+  (multiple-value-bind (rows header)
+      (cl-csv:read-csv (with-crlf "Alice,30" "Bob,25") :has-header nil)
+    (declare (ignore header))
+    (is (equal '(("Alice" "30") ("Bob" "25")) rows))))
+
+;;; Empty input — has-header t, no rows → second value is nil.
+(test has-header/empty-input
+  "read-csv on empty input with has-header t returns nil for both values"
+  (multiple-value-bind (rows header)
+      (cl-csv:read-csv "" :has-header t)
+    (is (null rows))
+    (is (null header))))
+
+;;; Single row (header only) — has-header t, data rows are empty.
+(test has-header/single-row-is-header
+  "read-csv on a single-row CSV returns empty data rows and that row as header"
+  (multiple-value-bind (rows header)
+      (cl-csv:read-csv "col1,col2,col3" :has-header t)
+    (is (null rows))
+    (is (equal '("col1" "col2" "col3") header))))
+
+;;; write-csv without headers writes all rows as data (no header line).
+(test has-header/write-csv-no-header
+  "write-csv without :headers writes data rows only"
+  (is (string= (cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil)
+               (crlf "Alice,30" "Bob,25"))))
+
+;;; write-csv with headers list prepends the header row.
+(test has-header/write-csv-prepends-header
+  "write-csv with :headers list prepends it as the first row"
+  (is (string= (cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil
+                                 :headers '("name" "age"))
+               (crlf "name,age" "Alice,30" "Bob,25"))))
+
+;;; write-csv with headers nil produces no header row.
+(test has-header/write-csv-nil-no-header-line
+  "write-csv with :headers nil produces no header row"
+  (is (string= (cl-csv:write-csv '(("a" "b")) nil :headers nil)
+               (crlf "a,b"))))
+
+;;; write-csv with headers honours quoting options.
+(test has-header/write-csv-header-quoting
+  "write-csv quotes header fields that contain special characters"
+  (let ((output (cl-csv:write-csv '(("1" "2")) nil
+                                  :headers '("col,a" "col b"))))
+    (is-true (search "\"col,a\"" output))))
+
+
 ;;; -----------------------------------------------------------------------
 ;;; Error / condition tests
 ;;; -----------------------------------------------------------------------

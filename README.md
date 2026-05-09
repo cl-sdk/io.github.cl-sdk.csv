@@ -47,6 +47,7 @@ Usage:
 ./cl-csv-dump data.csv
 cat data.csv | ./cl-csv-dump
 ./cl-csv-dump -
+./cl-csv-dump --no-header data.csv   # treat file as having no header
 ```
 
 ---
@@ -75,23 +76,42 @@ end-of-file.
 ; => ("a" "b" "c")
 ```
 
-### `read-csv input &key separator quote skip-empty-lines` → `list`
+### `read-csv input &key separator quote skip-empty-lines has-header` → `rows, header`
 
-Read all rows from `input` (stream, string, or pathname).  Returns a
-list of string lists.
+Read all rows from `input` (stream, string, or pathname).  Returns two
+values: the primary value is the data rows (header excluded when present),
+and the secondary value is the header row or `nil`.
+
+| Keyword | Default | Description |
+|---|---|---|
+| `:has-header` | `t` | When non-`nil`, the file is assumed to have a header record as its first row; that row is returned as the second value and is excluded from the primary value.  When `nil`, no header is expected and the second value is `nil`. |
 
 ```lisp
+;; Default: file has a header — header returned as second value, excluded from rows
 (cl-csv:read-csv "name,age
 Alice,30
 Bob,25")
-; => (("name" "age") ("Alice" "30") ("Bob" "25"))
-```
+; primary  => (("Alice" "30") ("Bob" "25"))
+; secondary => ("name" "age")
 
-Quoted fields and embedded newlines are handled automatically:
+;; Convenient destructuring with multiple-value-bind
+(multiple-value-bind (rows header)
+    (cl-csv:read-csv "name,age
+Alice,30
+Bob,25")
+  (format t "Header: ~a~%" header)
+  (format t "Data:   ~a~%" rows))
+; Header: (name age)
+; Data:   ((Alice 30) (Bob 25))
 
-```lisp
-(cl-csv:read-csv "\"hello, world\",42")
-; => (("hello, world" "42"))
+;; File has no header — second value is nil, all rows are data
+(multiple-value-bind (rows header)
+    (cl-csv:read-csv "Alice,30
+Bob,25" :has-header nil)
+  (format t "Header: ~a~%" header)
+  (format t "Data:   ~a~%" rows))
+; Header: nil
+; Data:   ((Alice 30) (Bob 25))
 ```
 
 ---
@@ -111,7 +131,7 @@ Write a list of field values as one CSV row (appends `newline`).
 ; prints: Alice,30\r\n
 ```
 
-### `write-csv rows output &key separator quote newline always-quote` → `string | nil`
+### `write-csv rows output &key separator quote newline always-quote headers` → `string | nil`
 
 Write all rows to `output`.
 
@@ -120,8 +140,18 @@ Write all rows to `output`.
 * stream     → writes to that stream
 * pathname   → writes to file (UTF-8, overwrites if exists)
 
+| Keyword | Default | Description |
+|---|---|---|
+| `:headers` | `nil` | A list of field names to write as the header row before the data rows, or `nil` (the default) for no header.  When provided, the header is written first and `rows` contains only data rows. |
+
 ```lisp
-(cl-csv:write-csv '(("name" "age") ("Alice" "30") ("Bob" "25")) nil)
+;; No header (default) — rows are plain data
+(cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil)
+; => "Alice,30\r\nBob,25\r\n"
+
+;; With a header passed explicitly
+(cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil
+                  :headers '("name" "age"))
 ; => "name,age\r\nAlice,30\r\nBob,25\r\n"
 ```
 

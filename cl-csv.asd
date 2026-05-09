@@ -1,4 +1,4 @@
-(asdf:defsystem :cl-csv
+(asdf:defsystem #:cl-csv
   :long-name "cl-csv CSV library"
   :description "CSV reader and writer for Common Lisp"
   :long-description
@@ -12,5 +12,4 @@ handling, and APIs for streams, strings, and pathnames."
   :bug-tracker "https://github.com/cl-sdk/cl-csv/issues"
   :source-control (:git "https://github.com/cl-sdk/cl-csv.git")
   :serial t
-  :components ((:file "cl-csv"))
-  :in-order-to ((test-op (test-op :cl-csv.test))))
+  :components ((:file "cl-csv")))

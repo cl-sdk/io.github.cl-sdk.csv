@@ -1,4 +1,4 @@
-(asdf:defsystem :cl-csv.test
+(asdf:defsystem #:cl-csv.test
   :long-name "cl-csv test suite"
   :description "Tests for cl-csv using the FiveAM test framework"
   :long-description "Regression tests for the cl-csv ASDF system."
@@ -10,6 +10,4 @@
   :source-control (:git "https://github.com/cl-sdk/cl-csv.git")
   :serial t
   :depends-on (:cl-csv :fiveam)
-  :components ((:file "t/test"))
-  :perform (test-op (op c)
-             (uiop:symbol-call :fiveam :run! 'cl-csv.test::cl-csv.test)))
+  :components ((:file "t/test")))

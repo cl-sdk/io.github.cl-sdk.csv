@@ -387,3 +387,42 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
   (handler-case (cl-csv:parse-fragment "bad=selector")
     (cl-csv:csv-parse-error (c)
       (is (typep (cl-csv:csv-parse-error-message c) 'string)))))
+
+
+;;; -----------------------------------------------------------------------
+;;; CLI tests
+;;; -----------------------------------------------------------------------
+
+(def-suite cl-csv-cli
+  :description "CLI behavior"
+  :in cl-csv.test)
+
+(in-suite cl-csv-cli)
+
+(test cli/prints-sexp-from-stdin
+  "CLI reads CSV from stdin and prints an s-expression."
+  (let ((out (make-string-output-stream))
+        (err (make-string-output-stream)))
+    (is (= 0 (cl-csv.cli:run '()
+                             :stdin (make-string-input-stream (format nil "a,b~%c,d~%"))
+                             :stdout out
+                             :stderr err)))
+    (is (equal '(("a" "b") ("c" "d"))
+               (read-from-string (get-output-stream-string out))))
+    (is (string= "" (get-output-stream-string err)))))
+
+(test cli/help
+  "CLI help exits successfully and prints usage."
+  (let ((out (make-string-output-stream))
+        (err (make-string-output-stream)))
+    (is (= 0 (cl-csv.cli:run '("--help") :stdout out :stderr err)))
+    (is-true (search "Usage: cl-csv-dump" (get-output-stream-string out)))
+    (is (string= "" (get-output-stream-string err)))))
+
+(test cli/too-many-args
+  "CLI rejects too many positional arguments."
+  (let ((out (make-string-output-stream))
+        (err (make-string-output-stream)))
+    (is (= 2 (cl-csv.cli:run '("a.csv" "b.csv") :stdout out :stderr err)))
+    (is (string= "" (get-output-stream-string out)))
+    (is-true (search "Usage: cl-csv-dump" (get-output-stream-string err)))))

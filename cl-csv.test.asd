@@ -9,5 +9,5 @@
   :bug-tracker "https://github.com/cl-sdk/cl-csv/issues"
   :source-control (:git "https://github.com/cl-sdk/cl-csv.git")
   :serial t
-  :depends-on (:cl-csv :fiveam)
+  :depends-on (:cl-csv :cl-csv.cli :fiveam)
   :components ((:file "t/test")))

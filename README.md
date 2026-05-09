@@ -31,6 +31,28 @@ sbcl --noinform \
      --eval '(exit)'
 ```
 
+## CLI: CSV to s-expressions
+
+Build a standalone executable:
+
+```sh
+sbcl --noinform \
+     --eval '(require :asdf)' \
+     --eval '(push #P"/path/to/cl-csv/" asdf:*central-registry*)' \
+     --eval '(asdf:make :cl-csv.cli)' \
+     --eval '(exit)'
+```
+
+This produces `cl-csv-dump` in the current directory.
+
+Usage:
+
+```sh
+./cl-csv-dump data.csv
+cat data.csv | ./cl-csv-dump
+./cl-csv-dump -
+```
+
 ---
 
 ## Dynamic variables

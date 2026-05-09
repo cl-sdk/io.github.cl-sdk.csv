@@ -10,7 +10,7 @@
 ;;;; Recognised parameters:  charset (default US-ASCII per RFC 2046 §4.1.2)
 ;;;;                          header  ("present" | "absent", RFC 4180 §3)
 
-(defpackage :cl-csv
+(defpackage :io.github.cl-sdk.csv
   (:use :cl)
   (:export
    ;; Dynamic variables
@@ -46,4 +46,4 @@
    #:parse-fragment
    #:select-by-fragment))
 
-(in-package :cl-csv)
+(in-package :io.github.cl-sdk.csv)

@@ -1,4 +1,4 @@
-(in-package :cl-csv)
+(in-package :io.github.cl-sdk.csv)
 
 (define-condition csv-error (error)
   ()

@@ -15,11 +15,11 @@
 (defun read-rows-from-arg (arg stdin &key has-header)
   (cond
     ((or (null arg) (string= arg "-"))
-     (cl-csv:parse-csv stdin :has-header has-header))
+     (io.github.cl-sdk.csv:parse-csv stdin :has-header has-header))
     (t
      (handler-case
 	 (with-open-file (s (pathname arg))
-	  (cl-csv:parse-csv s :has-header has-header))
+	  (io.github.cl-sdk.csv:parse-csv s :has-header has-header))
        (file-error ()
 	 (error "Cannot read file ~S." arg))))))
 

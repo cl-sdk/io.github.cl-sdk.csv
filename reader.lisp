@@ -1,4 +1,4 @@
-(in-package :cl-csv)
+(in-package :io.github.cl-sdk.csv)
 
 (defun read-csv-row (stream &key (separator *separator*) (quote *quote*))
   "Read one CSV row from STREAM and return it as a list of strings.

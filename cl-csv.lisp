@@ -289,6 +289,10 @@ Options:
                   inspect it, but does not alter the rows that are written.
 
 Conforms to RFC 4180 §2 (header support per RFC 4180 §3 MIME parameter)."
+  ;; has-header is accepted as an advisory parameter so callers can
+  ;; document intent (e.g. round-trip symmetry with read-csv) and so
+  ;; that future versions of write-csv can act on it without changing
+  ;; the public API signature.
   (declare (ignore has-header))
   (flet ((do-write (stream)
            (dolist (row rows)

@@ -142,10 +142,16 @@ Write all rows to `output`.
 
 | Keyword | Default | Description |
 |---|---|---|
-| `:has-header` | `t` | Declares whether the first row of `rows` is a header record (`t`) or whether all rows are plain data (`nil`).  Advisory: does not alter which rows are written. |
+| `:has-header` | `nil` | A list of field names to write as the header row before the data rows, or `nil` (the default) for no header.  When provided, the header is written first and `rows` contains only data rows. |
 
 ```lisp
-(cl-csv:write-csv '(("name" "age") ("Alice" "30") ("Bob" "25")) nil)
+;; No header (default) — rows are plain data
+(cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil)
+; => "Alice,30\r\nBob,25\r\n"
+
+;; With a header passed explicitly
+(cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil
+                  :has-header '("name" "age"))
 ; => "name,age\r\nAlice,30\r\nBob,25\r\n"
 ```
 

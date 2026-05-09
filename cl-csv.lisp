@@ -265,10 +265,10 @@ this function and handle the last row manually."
                                 (quote        *quote*)
                                 (newline      *newline*)
                                 (always-quote *always-quote*)
-                                (has-header   t))
+                                (has-header   nil))
   "Write CSV rows to OUTPUT.
 
-ROWS is a sequence of rows; each row is a list of field values.
+ROWS is a sequence of data rows; each row is a list of field values.
 Field values are coerced to strings via PRINC-TO-STRING.
 
 OUTPUT may be:
@@ -282,19 +282,19 @@ Options:
   :QUOTE        — quoting character (default *QUOTE*)
   :NEWLINE      — row-terminator string (default *NEWLINE*, i.e. CRLF)
   :ALWAYS-QUOTE — when non-NIL every field is quoted
-  :HAS-HEADER   — when non-NIL (the default) the first element of ROWS
-                  is treated as the header record; when NIL all rows are
-                  data rows.  This parameter is currently advisory: it
-                  documents intent and is available for callers that
-                  inspect it, but does not alter the rows that are written.
+  :HAS-HEADER   — a list of field names to write as the header row before
+                  the data rows, or NIL (the default) for no header.
+                  When provided, the header is written first and ROWS
+                  contains only data rows.
 
 Conforms to RFC 4180 §2 (header support per RFC 4180 §3 MIME parameter)."
-  ;; has-header is accepted as an advisory parameter so callers can
-  ;; document intent (e.g. round-trip symmetry with read-csv) and so
-  ;; that future versions of write-csv can act on it without changing
-  ;; the public API signature.
-  (declare (ignore has-header))
   (flet ((do-write (stream)
+           (when has-header
+             (write-csv-row has-header stream
+                            :separator    separator
+                            :quote        quote
+                            :newline      newline
+                            :always-quote always-quote))
            (dolist (row rows)
              (write-csv-row row stream
                             :separator    separator

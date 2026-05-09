@@ -29,6 +29,7 @@
    ;; Reader
    #:read-csv-row
    #:read-csv
+   #:parse-csv
 
    ;; Writer
    #:write-csv-field
@@ -158,7 +159,12 @@ Parsing rules follow RFC 4180 §2:
           ;; ── Ordinary character ─────────────────────────────────────────
           (t
            (write-char ch field)
-           (setf field-active t)))))))
+            (setf field-active t)))))))
+
+(defun %skip-csv-row-p (row skip-empty-lines)
+  (and skip-empty-lines
+       (= 1 (length row))
+       (string= "" (first row))))
 
 (defun read-csv (input &key
                          (separator       *separator*)
@@ -191,16 +197,14 @@ value so ROWS contains only data rows.
 
 Conforms to RFC 4180 §2 (header support per RFC 4180 §3 MIME parameter)."
   (flet ((do-read (stream)
-           (loop for row = (read-csv-row stream
-                                         :separator separator
-                                         :quote     quote)
-                 while row
-                 unless (and skip-empty-lines
-                             (= 1 (length row))
-                             (string= "" (first row)))
-                   collect row)))
+            (loop for row = (read-csv-row stream
+                                          :separator separator
+                                          :quote     quote)
+                  while row
+                  unless (%skip-csv-row-p row skip-empty-lines)
+                    collect row)))
     (let ((rows (etypecase input
-                  (stream   (do-read input))
+                   (stream   (do-read input))
                   (string   (with-input-from-string (s input)
                               (do-read s)))
                   (pathname (with-open-file (s input :external-format :utf-8)
@@ -208,6 +212,47 @@ Conforms to RFC 4180 §2 (header support per RFC 4180 §3 MIME parameter)."
       (if has-header
           (values (rest rows) (first rows))
           (values rows nil)))))
+
+(defun parse-csv (input handler &key
+                         (separator       *separator*)
+                         (quote           *quote*)
+                         skip-empty-lines
+                         (has-header      t))
+  "Read INPUT and emit SAX-like events to HANDLER.
+
+HANDLER is called with two arguments: an event keyword and its payload.
+The supported events are:
+  :BEGIN-DOCUMENT  — payload is NIL
+  :HEADER          — payload is the header row
+  :LINE            — payload is a data row
+  :END-DOCUMENT    — payload is NIL
+
+INPUT and keyword arguments match READ-CSV.  When HAS-HEADER is non-NIL,
+the first non-skipped row is emitted as :HEADER; otherwise every row is
+emitted as :LINE."
+  (flet ((emit (event &optional payload)
+           (funcall handler event payload))
+         (do-parse (stream)
+           (emit :begin-document)
+           (loop with header-emitted-p = nil
+                 for row = (read-csv-row stream
+                                         :separator separator
+                                         :quote     quote)
+                 while row
+                 unless (%skip-csv-row-p row skip-empty-lines)
+                   do (if (and has-header (not header-emitted-p))
+                          (progn
+                            (emit :header row)
+                            (setf header-emitted-p t))
+                          (emit :line row)))
+           (emit :end-document)))
+    (etypecase input
+      (stream   (do-parse input))
+      (string   (with-input-from-string (s input)
+                  (do-parse s)))
+      (pathname (with-open-file (s input :external-format :utf-8)
+                  (do-parse s)))))
+  nil)
 
 
 ;;; -----------------------------------------------------------------------

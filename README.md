@@ -100,6 +100,21 @@ Bob,25" :has-header nil)
 ; Data:   ((Alice 30) (Bob 25))
 ```
 
+Stream rows as events instead of materializing the full table:
+
+```lisp
+(cl-csv:parse-csv "name,age
+Alice,30
+Bob,25"
+  (lambda (event payload)
+    (format t "~a => ~s~%" event payload)))
+;; :BEGIN-DOCUMENT => NIL
+;; :HEADER => ("name" "age")
+;; :LINE => ("Alice" "30")
+;; :LINE => ("Bob" "25")
+;; :END-DOCUMENT => NIL
+```
+
 ---
 
 ## Writer

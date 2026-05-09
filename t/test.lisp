@@ -31,6 +31,14 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
   "Join STRINGS with CRLF separators, no trailing CRLF."
   (join-with-crlf strings :trailing-crlf nil))
 
+(defun collect-parse-csv-events (input &rest args &key &allow-other-keys)
+  (let ((events '()))
+    (apply #'cl-csv:parse-csv input
+           (lambda (event payload)
+             (push (list event payload) events))
+           args)
+    (nreverse events)))
+
 
 ;;; -----------------------------------------------------------------------
 ;;; Top-level suite
@@ -450,6 +458,41 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
   (let ((output (cl-csv:write-csv '(("1" "2")) nil
                                   :headers '("col,a" "col b"))))
     (is-true (search "\"col,a\"" output))))
+
+
+;;; -----------------------------------------------------------------------
+;;; SAX-like parser tests
+;;; -----------------------------------------------------------------------
+
+(def-suite sax-parser
+  :description "SAX-like CSV parser"
+  :in cl-csv.test)
+
+(in-suite sax-parser)
+
+(test sax-parser/default-header-events
+  "parse-csv emits begin/header/line/end events when headers are enabled"
+  (is (equal '((:begin-document nil)
+               (:header ("name" "age"))
+               (:line ("Alice" "30"))
+               (:line ("Bob" "25"))
+               (:end-document nil))
+             (collect-parse-csv-events (with-crlf "name,age" "Alice,30" "Bob,25")))))
+
+(test sax-parser/no-header-events
+  "parse-csv emits only line events for rows when has-header is nil"
+  (is (equal '((:begin-document nil)
+               (:line ("name" "age"))
+               (:line ("Alice" "30"))
+               (:end-document nil))
+             (collect-parse-csv-events (with-crlf "name,age" "Alice,30")
+                                       :has-header nil))))
+
+(test sax-parser/empty-input
+  "parse-csv still emits document boundary events on empty input"
+  (is (equal '((:begin-document nil)
+               (:end-document nil))
+             (collect-parse-csv-events ""))))
 
 
 ;;; -----------------------------------------------------------------------

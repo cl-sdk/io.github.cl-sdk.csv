@@ -1,0 +1,10 @@
+id,species,common_name,wing_span_cm,migratory,notes
+1,Corvus corax,Raven,150,true,"Highly intelligent bird"
+2,Pica pica,"Eurasian Magpie",60,true,"Black and white plumage"
+3,Struthio camelus,Ostrich,200,false,"Largest living bird"
+4,"Ara ararauna","Blue-and-yellow Macaw",110,false,"Native to South America"
+5,Tyto alba,"Barn Owl",95,true,"Nocturnal hunter"
+6,Spheniscus magellanicus,"Magellanic Penguin",,false,"Lives in coastal regions"
+7,"Cacatua galerita","Sulphur-crested Cockatoo",100,false,"Can mimic speech
+and sounds"
+8,Haliaeetus leucocephalus,"Bald Eagle",210,true,"Symbol of the USA"

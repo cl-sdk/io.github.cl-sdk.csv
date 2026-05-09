@@ -31,6 +31,24 @@ sbcl --noinform \
      --eval '(exit)'
 ```
 
+## CLI: CSV to s-expressions
+
+Build a standalone executable:
+
+```sh
+make cli
+```
+
+This produces `csv-to-list` in the current directory.
+
+Usage:
+
+```sh
+./cl-csv-dump data.csv
+cat data.csv | ./cl-csv-dump
+./cl-csv-dump -
+```
+
 ---
 
 ## Dynamic variables

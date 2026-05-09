@@ -14,8 +14,8 @@ tests:
 
 cli:
 	$(LISP) \
-	--noinform \
 	$(LISPFLAGS) \
+	--noinform \
 	--eval '(require :asdf)' \
 	--eval '(push #P"./" asdf:*central-registry*)' \
 	--eval '(asdf:operate (quote asdf:program-op) :cl-csv.cli)' \

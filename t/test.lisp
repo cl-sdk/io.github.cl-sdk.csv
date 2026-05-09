@@ -39,6 +39,24 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
            args)
     (nreverse events)))
 
+(defclass recording-csv-parser (cl-csv:csv-parser)
+  ((events :initform '() :accessor recording-csv-parser-events)))
+
+(defmethod cl-csv:csv-parser-begin-document ((parser recording-csv-parser))
+  (push '(:begin-document nil) (recording-csv-parser-events parser)))
+
+(defmethod cl-csv:csv-parser-end-document ((parser recording-csv-parser))
+  (push '(:end-document nil) (recording-csv-parser-events parser)))
+
+(defmethod cl-csv:csv-parser-header ((parser recording-csv-parser) row)
+  (push (list :header row) (recording-csv-parser-events parser)))
+
+(defmethod cl-csv:csv-parser-line ((parser recording-csv-parser) row)
+  (push (list :line row) (recording-csv-parser-events parser)))
+
+(defmethod cl-csv:csv-parser-result ((parser recording-csv-parser))
+  (nreverse (recording-csv-parser-events parser)))
+
 
 ;;; -----------------------------------------------------------------------
 ;;; Top-level suite
@@ -479,14 +497,36 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
                (:end-document nil))
              (collect-parse-csv-events (with-crlf "name,age" "Alice,30" "Bob,25")))))
 
+(test sax-parser/default-parser-return-value
+  "parse-csv without an explicit parser returns rows and header"
+  (multiple-value-bind (rows header)
+      (cl-csv:parse-csv (with-crlf "name,age" "Alice,30" "Bob,25"))
+    (is (equal '(("Alice" "30") ("Bob" "25")) rows))
+    (is (equal '("name" "age") header))))
+
 (test sax-parser/no-header-events
   "parse-csv emits only line events for rows when has-header is nil"
   (is (equal '((:begin-document nil)
                (:line ("name" "age"))
                (:line ("Alice" "30"))
                (:end-document nil))
-             (collect-parse-csv-events (with-crlf "name,age" "Alice,30")
-                                       :has-header nil))))
+              (collect-parse-csv-events (with-crlf "name,age" "Alice,30")
+                                        :has-header nil))))
+
+(test sax-parser/function-parser-return-value
+  "parse-csv with a function parser preserves the NIL return value"
+  (is (null (cl-csv:parse-csv (with-crlf "name,age" "Alice,30")
+                              (lambda (event payload)
+                                (declare (ignore event payload)))))))
+
+(test sax-parser/custom-parser-instance
+  "parse-csv accepts custom CSV-PARSER implementations"
+  (let ((parser (make-instance 'recording-csv-parser)))
+    (is (equal '((:begin-document nil)
+                 (:header ("name" "age"))
+                 (:line ("Alice" "30"))
+                 (:end-document nil))
+               (cl-csv:parse-csv (with-crlf "name,age" "Alice,30") parser)))))
 
 (test sax-parser/empty-input
   "parse-csv still emits document boundary events on empty input"

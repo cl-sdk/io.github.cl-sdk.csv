@@ -29,6 +29,12 @@
    ;; Reader
    #:read-csv-row
    #:read-csv
+   #:csv-parser
+   #:csv-parser-begin-document
+   #:csv-parser-end-document
+   #:csv-parser-header
+   #:csv-parser-line
+   #:csv-parser-result
    #:parse-csv
 
    ;; Writer
@@ -166,6 +172,97 @@ Parsing rules follow RFC 4180 §2:
        (= 1 (length row))
        (string= "" (first row))))
 
+(defclass csv-parser ()
+  ()
+  (:documentation "Base class for event-driven CSV parser implementations."))
+
+(defgeneric csv-parser-begin-document (parser)
+  (:documentation "Handle the start of a CSV document."))
+
+(defgeneric csv-parser-end-document (parser)
+  (:documentation "Handle the end of a CSV document."))
+
+(defgeneric csv-parser-header (parser row)
+  (:documentation "Handle a CSV header row."))
+
+(defgeneric csv-parser-line (parser row)
+  (:documentation "Handle a CSV data row."))
+
+(defgeneric csv-parser-result (parser)
+  (:documentation "Return the final result produced by PARSER."))
+
+(defmethod csv-parser-begin-document ((parser csv-parser))
+  nil)
+
+(defmethod csv-parser-end-document ((parser csv-parser))
+  nil)
+
+(defmethod csv-parser-header ((parser csv-parser) row)
+  (declare (ignore row))
+  nil)
+
+(defmethod csv-parser-line ((parser csv-parser) row)
+  (declare (ignore row))
+  nil)
+
+(defmethod csv-parser-result ((parser csv-parser))
+  parser)
+
+(defclass %collecting-csv-parser (csv-parser)
+  ((rows   :initform '()  :accessor %collecting-csv-parser-rows)
+   (header :initform nil  :accessor %collecting-csv-parser-header))
+  (:documentation "Default parser implementation used by PARSE-CSV and READ-CSV."))
+
+(defmethod csv-parser-begin-document ((parser %collecting-csv-parser))
+  (setf (%collecting-csv-parser-rows parser) '()
+        (%collecting-csv-parser-header parser) nil))
+
+(defmethod csv-parser-header ((parser %collecting-csv-parser) row)
+  (setf (%collecting-csv-parser-header parser) row))
+
+(defmethod csv-parser-line ((parser %collecting-csv-parser) row)
+  (push row (%collecting-csv-parser-rows parser)))
+
+(defmethod csv-parser-result ((parser %collecting-csv-parser))
+  (values (nreverse (%collecting-csv-parser-rows parser))
+          (%collecting-csv-parser-header parser)))
+
+(defclass %function-csv-parser (csv-parser)
+  ((function :initarg :function :reader %function-csv-parser-function))
+  (:documentation "Internal adapter that forwards CSV parser events to a function."))
+
+(defun %call-function-csv-parser (parser event &optional payload)
+  (funcall (%function-csv-parser-function parser) event payload))
+
+(defmethod csv-parser-begin-document ((parser %function-csv-parser))
+  (%call-function-csv-parser parser :begin-document))
+
+(defmethod csv-parser-end-document ((parser %function-csv-parser))
+  (%call-function-csv-parser parser :end-document))
+
+(defmethod csv-parser-header ((parser %function-csv-parser) row)
+  (%call-function-csv-parser parser :header row))
+
+(defmethod csv-parser-line ((parser %function-csv-parser) row)
+  (%call-function-csv-parser parser :line row))
+
+(defmethod csv-parser-result ((parser %function-csv-parser))
+  (declare (ignore parser))
+  nil)
+
+(defun %make-default-csv-parser ()
+  (make-instance '%collecting-csv-parser))
+
+(defun %ensure-csv-parser (parser)
+  (typecase parser
+    (null (%make-default-csv-parser))
+    (function (make-instance '%function-csv-parser :function parser))
+    (csv-parser parser)
+    (t
+     (error 'type-error
+            :datum parser
+            :expected-type '(or null function csv-parser)))))
+
 (defun read-csv (input &key
                          (separator       *separator*)
                          (quote           *quote*)
@@ -196,31 +293,27 @@ When HAS-HEADER is non-NIL the header row is stripped from the primary
 value so ROWS contains only data rows.
 
 Conforms to RFC 4180 §2 (header support per RFC 4180 §3 MIME parameter)."
-  (flet ((do-read (stream)
-            (loop for row = (read-csv-row stream
-                                          :separator separator
-                                          :quote     quote)
-                  while row
-                  unless (%skip-csv-row-p row skip-empty-lines)
-                    collect row)))
-     (let ((rows (etypecase input
-                    (stream   (do-read input))
-                    (string   (with-input-from-string (s input)
-                               (do-read s)))
-                    (pathname (with-open-file (s input :external-format :utf-8)
-                               (do-read s))))))
-      (if has-header
-          (values (rest rows) (first rows))
-          (values rows nil)))))
+  (parse-csv input nil
+             :separator separator
+             :quote quote
+             :skip-empty-lines skip-empty-lines
+             :has-header has-header))
 
-(defun parse-csv (input handler &key
-                         (separator       *separator*)
-                         (quote           *quote*)
-                         skip-empty-lines
-                         (has-header      t))
-  "Read INPUT and emit SAX-like events to HANDLER.
+(defun parse-csv (input &optional parser &key
+                          (separator       *separator*)
+                          (quote           *quote*)
+                          skip-empty-lines
+                          (has-header      t))
+  "Read INPUT, emit SAX-like events, and return PARSER's result.
 
-HANDLER is called with two arguments: an event keyword and its payload.
+PARSER may be NIL, a function, or an instance of CSV-PARSER.
+When PARSER is NIL, a default collecting parser is used and the return
+values match READ-CSV: (data-rows header-or-nil).
+
+Function parsers are called with two arguments: an event keyword and its
+payload.  CSV-PARSER instances receive the corresponding generic-function
+callbacks.
+
 The supported events are:
   :BEGIN-DOCUMENT  — payload is NIL
   :HEADER          — payload is the header row
@@ -230,29 +323,36 @@ The supported events are:
 INPUT and keyword arguments match READ-CSV.  When HAS-HEADER is non-NIL,
 the first non-skipped row is emitted as :HEADER; otherwise every row is
 emitted as :LINE."
-  (flet ((emit (event &optional payload)
-           (funcall handler event payload))
-         (do-parse (stream)
-           (emit :begin-document)
-           (loop with header-emitted-p = nil
-                 for row = (read-csv-row stream
-                                         :separator separator
-                                         :quote     quote)
-                 while row
-                 unless (%skip-csv-row-p row skip-empty-lines)
-                   do (if (and has-header (not header-emitted-p))
-                          (progn
-                            (emit :header row)
-                            (setf header-emitted-p t))
-                          (emit :line row)))
-           (emit :end-document)))
-    (etypecase input
-      (stream   (do-parse input))
-      (string   (with-input-from-string (s input)
-                  (do-parse s)))
-      (pathname (with-open-file (s input :external-format :utf-8)
-                  (do-parse s)))))
-  nil)
+  (let ((parser (%ensure-csv-parser parser)))
+    (flet ((emit-begin-document ()
+             (csv-parser-begin-document parser))
+           (emit-end-document ()
+             (csv-parser-end-document parser))
+           (emit-header (row)
+             (csv-parser-header parser row))
+           (emit-line (row)
+             (csv-parser-line parser row))
+           (do-parse (stream)
+             (emit-begin-document)
+             (loop with header-emitted-p = nil
+                   for row = (read-csv-row stream
+                                           :separator separator
+                                           :quote     quote)
+                   while row
+                   unless (%skip-csv-row-p row skip-empty-lines)
+                     do (if (and has-header (not header-emitted-p))
+                            (progn
+                              (emit-header row)
+                              (setf header-emitted-p t))
+                            (emit-line row)))
+             (emit-end-document)))
+      (etypecase input
+        (stream   (do-parse input))
+        (string   (with-input-from-string (s input)
+                    (do-parse s)))
+        (pathname (with-open-file (s input :external-format :utf-8)
+                    (do-parse s))))
+      (csv-parser-result parser))))
 
 
 ;;; -----------------------------------------------------------------------

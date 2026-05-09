@@ -55,7 +55,7 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
 ;;; -----------------------------------------------------------------------
 
 (def-suite io.github.cl-sdk.ini.test
-  :description "cl-csv test suite")
+  :description "io.github.cl-sdk.ini test suite")
 
 
 ;;; -----------------------------------------------------------------------

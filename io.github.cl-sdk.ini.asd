@@ -1,5 +1,5 @@
 (asdf:defsystem #:io.github.cl-sdk.ini
-  :long-name "cl-csv CSV library"
+  :long-name "io.github.cl-sdk.ini"
   :description "CSV reader and writer for Common Lisp"
   :long-description
   "CSV reader and writer for Common Lisp with RFC 4180 parsing and writing,

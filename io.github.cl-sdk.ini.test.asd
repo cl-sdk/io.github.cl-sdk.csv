@@ -1,7 +1,7 @@
 (asdf:defsystem #:io.github.cl-sdk.ini.test
-  :long-name "cl-csv test suite"
-  :description "Tests for cl-csv using the FiveAM test framework"
-  :long-description "Regression tests for the cl-csv ASDF system."
+  :long-name "io.github.cl-sdk.ini.test"
+  :description "Tests for io.github.cl-sdk.ini using the FiveAM test framework"
+  :long-description "Regression tests for the io.github.cl-sdk.ini ASDF system."
   :author "cl-sdk"
   :maintainer "cl-sdk"
   :license "Unlicense"

@@ -6,4 +6,5 @@
 
 (ql:quickload :cl-csv.test)
 
-(fiveam:run! 'cl-csv.test::cl-csv.test)
+(unless (fiveam:run-all-tests)
+  (uiop:quit -1))

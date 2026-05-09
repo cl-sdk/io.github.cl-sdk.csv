@@ -13,8 +13,8 @@ tests:
 	$(LISPFLAGS) --quit --load tests-runner.lisp
 
 cli:
-	ENV=$(ENV) \
 	$(LISP) \
+	--noinform \
 	$(LISPFLAGS) \
 	--eval '(require :asdf)' \
 	--eval '(push #P"./" asdf:*central-registry*)' \

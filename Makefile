@@ -13,8 +13,10 @@ tests:
 	$(LISPFLAGS) --quit --load tests-runner.lisp
 
 cli:
-	ros run sbcl --noinform \
-	     --eval '(require :asdf)' \
-	     --eval '(push #P"./" asdf:*central-registry*)' \
-	     --eval '(asdf:operate (quote asdf:program-op) :cl-csv.cli)' \
-	     --eval '(uiop:quit)'
+	ENV=$(ENV) \
+	$(LISP) \
+	$(LISPFLAGS) \
+	--eval '(require :asdf)' \
+	--eval '(push #P"./" asdf:*central-registry*)' \
+	--eval '(asdf:operate (quote asdf:program-op) :cl-csv.cli)' \
+	--eval '(uiop:quit)'

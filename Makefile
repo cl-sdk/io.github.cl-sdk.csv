@@ -2,7 +2,7 @@ ENV?=development
 
 ## NOTE: run sbcl loading the setting the current path
 ## on the `ql:*local-project-directories*`.
-LISP?=sbcl --sysinit ./.sbclrc
+LISP?=sbcl
 
 LISPFLAGS=--non-interactive --noinform
 
@@ -12,10 +12,13 @@ tests:
 	$(LISP) \
 	$(LISPFLAGS) --quit --load tests-runner.lisp
 
-cli:
+cli: clean
 	$(LISP) \
 	$(LISPFLAGS) \
 	--eval '(require :asdf)' \
 	--eval '(push #P"./" asdf:*central-registry*)' \
 	--eval '(asdf:operate (quote asdf:program-op) :cl-csv.cli)' \
 	--eval '(uiop:quit)'
+
+clean:
+	rm -rf cvs-to-list

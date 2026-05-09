@@ -1,0 +1,9 @@
+transaction_id,date,account,description,amount,currency,category
+1001,2026-05-01,Checking,"Salary Payment",4500.00,USD,Income
+1002,2026-05-02,Credit,"Coffee Shop",-4.75,USD,Food
+1003,2026-05-02,Checking,"Transfer to Savings",-500.00,USD,Savings
+1004,2026-05-03,Credit,"Bookstore: ""Common Lisp Recipes""",-39.90,USD,Books
+1005,2026-05-04,Brokerage,"ETF Purchase: VTI",-1200.50,USD,Investment
+1006,2026-05-05,Checking,"Refund, Online Store",89.99,USD,Refund
+1007,2026-05-06,Credit,"Monthly Subscription",-15.00,USD,
+1008,2026-05-07,Savings,"Interest Payment",3.42,USD,Interest

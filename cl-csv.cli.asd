@@ -8,5 +8,5 @@
   :serial t
   :components ((:file "cl-csv-cli"))
   :build-operation "program-op"
-  :build-pathname "cl-csv-dump"
+  :build-pathname "csv-to-list"
   :entry-point "cl-csv.cli:main")

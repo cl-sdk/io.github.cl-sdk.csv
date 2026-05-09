@@ -12,9 +12,8 @@ A CSV reader and writer for Common Lisp, conforming to
 
 ## Running Tests
 
-The test suite uses the [Parachute](https://shinmera.github.io/parachute/)
-framework.  Parachute and its dependencies are vendored under `vendor/`
-so no additional downloads are needed.
+The test suite uses the
+[FiveAM](https://common-lisp-libraries.readthedocs.io/fiveam/) framework.
 
 ```lisp
 ;; From the REPL, with the project root in ASDF's search path:

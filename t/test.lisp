@@ -19,9 +19,9 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
   (let ((crlf (coerce '(#\Return #\Newline) 'string)))
     (with-output-to-string (s)
       (loop for (str . rest) on strings
-            do (write-string str s)
-               (when (or rest trailing-crlf)
-                 (write-string crlf s))))))
+	    do (write-string str s)
+	       (when (or rest trailing-crlf)
+		 (write-string crlf s))))))
 
 (defun crlf (&rest strings)
   "Join STRINGS with CRLF and append a trailing CRLF (RFC 4180 §2 rule 2)."
@@ -30,14 +30,6 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
 (defun with-crlf (&rest strings)
   "Join STRINGS with CRLF separators, no trailing CRLF."
   (join-with-crlf strings :trailing-crlf nil))
-
-(defun collect-parse-csv-events (input &rest args &key &allow-other-keys)
-  (let ((events '()))
-    (apply #'cl-csv:parse-csv input
-           (lambda (event payload)
-             (push (list event payload) events))
-           args)
-    (nreverse events)))
 
 (defclass recording-csv-parser (cl-csv:csv-parser)
   ((events :initform '() :accessor recording-csv-parser-events)))
@@ -88,8 +80,8 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
   "Each record is on a separate line delimited by CRLF"
   (let ((input (crlf "aaa,bbb,ccc" "zzz,yyy,xxx")))
     (is (equal
-         '(("aaa" "bbb" "ccc") ("zzz" "yyy" "xxx"))
-         (cl-csv:read-csv input)))))
+	 '(("aaa" "bbb" "ccc") ("zzz" "yyy" "xxx"))
+	 (cl-csv:parse-csv input)))))
 
 ;;; RFC 4180 §2 Rule 2:
 ;;; "The last record in the file may or may not have an ending line break."
@@ -97,7 +89,7 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
   "Last record may omit the trailing line break"
   (is (equal
        '(("aaa" "bbb" "ccc") ("zzz" "yyy" "xxx"))
-       (cl-csv:read-csv (with-crlf "aaa,bbb,ccc" "zzz,yyy,xxx")))))
+       (cl-csv:parse-csv (with-crlf "aaa,bbb,ccc" "zzz,yyy,xxx")))))
 
 ;;; RFC 4180 §2 Rule 3:
 ;;; "There may be an optional header record appearing as the first line of
@@ -108,9 +100,9 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
 (test rfc-4180/rule-3-optional-header
   "Optional header record has the same format as data records"
   (let* ((input (crlf "field_name,field_name,field_name"
-                      "aaa,bbb,ccc"
-                      "zzz,yyy,xxx"))
-         (rows (cl-csv:read-csv input)))
+		      "aaa,bbb,ccc"
+		      "zzz,yyy,xxx"))
+	 (rows (cl-csv:parse-csv input)))
     (is (equal '("field_name" "field_name" "field_name") (first rows)))
     (is (equal '("aaa" "bbb" "ccc") (second rows)))
     (is (equal '("zzz" "yyy" "xxx") (third rows)))
@@ -122,7 +114,7 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
 ;;;   aaa,bbb,ccc
 (test rfc-4180/rule-4-comma-separator
   "Fields are separated by commas"
-  (is (equal '(("aaa" "bbb" "ccc")) (cl-csv:read-csv "aaa,bbb,ccc"))))
+  (is (equal '(("aaa" "bbb" "ccc")) (cl-csv:parse-csv "aaa,bbb,ccc"))))
 
 ;;; RFC 4180 §2 Rule 5:
 ;;; "Each field may or may not be enclosed in double quotes."
@@ -132,8 +124,8 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
   "Fields may optionally be enclosed in double quotes"
   (let ((input (with-crlf "\"aaa\",\"bbb\",\"ccc\"" "zzz,yyy,xxx")))
     (is (equal
-         '(("aaa" "bbb" "ccc") ("zzz" "yyy" "xxx"))
-         (cl-csv:read-csv input)))))
+	 '(("aaa" "bbb" "ccc") ("zzz" "yyy" "xxx"))
+	 (cl-csv:parse-csv input)))))
 
 ;;; RFC 4180 §2 Rule 6:
 ;;; "Fields containing line breaks (CRLF), double quotes, and commas
@@ -144,15 +136,15 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
 (test rfc-4180/rule-6-quoted-embedded-crlf
   "Fields containing CRLF must be enclosed in double-quotes"
   (let ((input (concatenate 'string
-                             "\"aaa\",\"b" (string #\Return) (string #\Newline)
-                             "bb\",\"ccc\"" (string #\Return) (string #\Newline)
-                             "zzz,yyy,xxx")))
+			     "\"aaa\",\"b" (string #\Return) (string #\Newline)
+			     "bb\",\"ccc\"" (string #\Return) (string #\Newline)
+			     "zzz,yyy,xxx")))
     (is (equal
-         (list (list "aaa"
-                     (concatenate 'string "b" (string #\Return) (string #\Newline) "bb")
-                     "ccc")
-               (list "zzz" "yyy" "xxx"))
-         (cl-csv:read-csv input)))))
+	 (list (list "aaa"
+		     (concatenate 'string "b" (string #\Return) (string #\Newline) "bb")
+		     "ccc")
+	       (list "zzz" "yyy" "xxx"))
+	 (cl-csv:parse-csv input)))))
 
 ;;; RFC 4180 §2 Rule 7:
 ;;; "If double-quotes are used to enclose fields, then a double-quote
@@ -163,40 +155,40 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
   "Double-quote inside a quoted field is escaped by doubling"
   (is (equal
        '(("aaa" "b\"bb" "ccc"))
-       (cl-csv:read-csv "\"aaa\",\"b\"\"bb\",\"ccc\""))))
+       (cl-csv:parse-csv "\"aaa\",\"b\"\"bb\",\"ccc\""))))
 
 ;;; Additional reader edge cases derived from the RFC grammar
 
 (test rfc-4180/empty-fields
   "Empty fields (leading, middle, trailing separator)"
-  (is (equal '(("" "b" "")) (cl-csv:read-csv ",b,"))))
+  (is (equal '(("" "b" "")) (cl-csv:parse-csv ",b,"))))
 
 (test rfc-4180/single-field
   "Single field with no separators"
-  (is (equal '(("hello")) (cl-csv:read-csv "hello"))))
+  (is (equal '(("hello")) (cl-csv:parse-csv "hello"))))
 
 (test rfc-4180/empty-quoted-field
   "An empty quoted field reads as empty string"
-  (is (equal '(("" "b")) (cl-csv:read-csv "\"\",b"))))
+  (is (equal '(("" "b")) (cl-csv:parse-csv "\"\",b"))))
 
 (test rfc-4180/bare-lf-line-ending
   "Bare LF is accepted as a line ending (common Unix variant)"
   (is (equal
        '(("a" "b") ("c" "d"))
-       (cl-csv:read-csv (format nil "a,b~%c,d")))))
+       (cl-csv:parse-csv (format nil "a,b~%c,d")))))
 
 (test rfc-4180/skip-empty-lines
   "skip-empty-lines option removes blank rows"
   (is (equal
        '(("a" "b") ("c" "d"))
-       (cl-csv:read-csv (format nil "a,b~%~%c,d")
-                        :skip-empty-lines t))))
+       (cl-csv:parse-csv (format nil "a,b~%~%c,d")
+			:skip-empty-lines t))))
 
 (test rfc-4180/read-custom-separator
   "Custom separator is respected by the reader"
   (is (equal '(("a" "b" "c"))
-             (cl-csv:read-csv (format nil "a~Cb~Cc" #\Tab #\Tab)
-                              :separator #\Tab))))
+	     (cl-csv:parse-csv (format nil "a~Cb~Cc" #\Tab #\Tab)
+			      :separator #\Tab))))
 
 
 ;;; -----------------------------------------------------------------------
@@ -235,11 +227,11 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
 
 ;;; Round-trip: read(write(data)) = data
 (test rfc-4180/round-trip
-  "write-csv followed by read-csv is a round-trip identity"
+  "write-csv followed by parse-csv is a round-trip identity"
   (let ((data '(("field_name" "field_name" "field_name")
-                ("aaa" "bbb" "ccc")
-                ("zzz" "yyy" "xxx"))))
-    (is (equal data (cl-csv:read-csv (cl-csv:write-csv data nil))))))
+		("aaa" "bbb" "ccc")
+		("zzz" "yyy" "xxx"))))
+    (is (equal data (cl-csv:parse-csv (cl-csv:write-csv data nil))))))
 
 ;;; always-quote option
 (test rfc-4180/write-always-quote
@@ -298,7 +290,7 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
   "row=M,N selects rows M and N (RFC 7111 §3.1)"
   (let ((table '(("r1") ("r2") ("r3") ("r4") ("r5"))))
     (is (equal '(("r1") ("r3") ("r5"))
-               (cl-csv:select-by-fragment table "row=1,3,5")))))
+	       (cl-csv:select-by-fragment table "row=1,3,5")))))
 
 ;;; RFC 7111 §3: "col=" selector
 ;;; "col=2" selects the 2nd column of every row
@@ -312,55 +304,55 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
   "col=M-N selects columns M through N (RFC 7111 §3.2)"
   (let ((table '(("a" "b" "c" "d" "e") ("1" "2" "3" "4" "5"))))
     (is (equal '(("b" "c" "d") ("2" "3" "4"))
-               (cl-csv:select-by-fragment table "col=2-4")))))
+	       (cl-csv:select-by-fragment table "col=2-4")))))
 
 ;;; RFC 7111 §3: "cell=" selector
 ;;; "cell=4-1" selects cell at row 4, column 1
 (test rfc-7111/cell-single
   "cell=R-C selects cell at row R column C (RFC 7111 §3.3)"
   (let ((table '(("a" "b" "c")
-                 ("d" "e" "f")
-                 ("g" "h" "i"))))
+		 ("d" "e" "f")
+		 ("g" "h" "i"))))
     ;; cell=2-3 → row 2, col 3 → "f"; other cells masked with ""
     (is (equal '(("" "" "f"))
-               (cl-csv:select-by-fragment table "cell=2-3")))))
+	       (cl-csv:select-by-fragment table "cell=2-3")))))
 
 ;;; RFC 7111 §3.3: cell=*-2 selects all rows, column 2
 (test rfc-7111/cell-wildcard-row
   "cell=*-C selects column C in all rows (RFC 7111 §3.3)"
   (let ((table '(("a" "b" "c") ("1" "2" "3") ("x" "y" "z"))))
     (is (equal '(("" "b" "") ("" "2" "") ("" "y" ""))
-               (cl-csv:select-by-fragment table "cell=*-2")))))
+	       (cl-csv:select-by-fragment table "cell=*-2")))))
 
 ;;; RFC 7111 §3.3: cell=R-* selects an entire row
 (test rfc-7111/cell-wildcard-col
   "cell=R-* selects all columns of row R (RFC 7111 §3.3)"
   (let ((table '(("a" "b") ("c" "d") ("e" "f"))))
     (is (equal '(("c" "d"))
-               (cl-csv:select-by-fragment table "cell=2-*")))))
+	       (cl-csv:select-by-fragment table "cell=2-*")))))
 
 ;;; RFC 7111 §3: multiple cell pairs
 ;;; "cell=3-2,5-4" selects two specific cells
 (test rfc-7111/cell-multiple-pairs
   "cell=R1-C1,R2-C2 selects two cells (RFC 7111 §3.3)"
   (let ((table '(("a" "b" "c" "d")
-                 ("e" "f" "g" "h")
-                 ("i" "j" "k" "l")
-                 ("m" "n" "o" "p")
-                 ("q" "r" "s" "t"))))
+		 ("e" "f" "g" "h")
+		 ("i" "j" "k" "l")
+		 ("m" "n" "o" "p")
+		 ("q" "r" "s" "t"))))
     ;; cell=1-2,3-4 → (row1,col2)="b" and (row3,col4)="l"
     (is (equal '(("" "b" "" "")
-                 ("" "" "" "l"))
-               (cl-csv:select-by-fragment table "cell=1-2,3-4")))))
+		 ("" "" "" "l"))
+	       (cl-csv:select-by-fragment table "cell=1-2,3-4")))))
 
 ;;; RFC 7111 §2.1: include-header option
 ;;; Header row is not counted in the 1-based row numbering.
 (test rfc-7111/include-header
   "include-header: header row is exempt from row numbering"
   (let ((table '(("name" "age" "city")
-                 ("Alice" "30" "NY")
-                 ("Bob"   "25" "LA")
-                 ("Carol" "35" "SF"))))
+		 ("Alice" "30" "NY")
+		 ("Bob"   "25" "LA")
+		 ("Carol" "35" "SF"))))
     (let ((result (cl-csv:select-by-fragment table "row=1,3" :include-header t)))
       (is (equal '("name" "age" "city") (first result)))
       (is (equal '("Alice" "30" "NY")   (second result)))
@@ -396,58 +388,58 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
 
 ;;; Default: has-header t — second return value is the header; header not in rows.
 (test has-header/default-returns-header-as-second-value
-  "read-csv with default has-header returns the header row as second value only"
-  (multiple-value-bind (rows header)
-      (cl-csv:read-csv (with-crlf "name,age" "Alice,30" "Bob,25"))
+  "parse-csv with default has-header returns the header row as second value only"
+  (destructuring-bind (header &rest rows)
+      (cl-csv:parse-csv (with-crlf "name,age" "Alice,30" "Bob,25"))
     (is (= 2 (length rows)))
     (is (equal '("name" "age") header))))
 
 ;;; Default: has-header t — primary return value contains data rows only.
 (test has-header/default-primary-value-data-only
-  "read-csv with default has-header returns only data rows as primary value"
-  (multiple-value-bind (rows header)
-      (cl-csv:read-csv (with-crlf "name,age" "Alice,30"))
+  "parse-csv with default has-header returns only data rows as primary value"
+  (destructuring-bind (header &rest rows)
+      (cl-csv:parse-csv (with-crlf "name,age" "Alice,30"))
     (declare (ignore header))
     (is (= 1 (length rows)))
     (is (equal '("Alice" "30") (first rows)))))
 
 ;;; Explicit has-header t — same as default.
 (test has-header/explicit-t
-  "read-csv with explicit has-header t returns header as second value"
-  (multiple-value-bind (rows header)
-      (cl-csv:read-csv (with-crlf "id,val" "1,a") :has-header t)
+  "parse-csv with explicit has-header t returns header as second value"
+  (destructuring-bind (header &rest rows)
+      (cl-csv:parse-csv (with-crlf "id,val" "1,a") :has-header t)
     (is (= 1 (length rows)))
     (is (equal '("id" "val") header))))
 
 ;;; has-header nil — second return value is nil (no header).
 (test has-header/nil-returns-nil-header
-  "read-csv with has-header nil returns nil as second value"
-  (multiple-value-bind (rows header)
-      (cl-csv:read-csv (with-crlf "Alice,30" "Bob,25") :has-header nil)
+  "parse-csv with has-header nil returns nil as second value"
+  (destructuring-bind (header &rest rows)
+      (cl-csv:parse-csv (with-crlf "Alice,30" "Bob,25") :has-header nil)
     (is (= 2 (length rows)))
     (is (null header))))
 
 ;;; has-header nil — primary return value is unchanged (all rows are data).
 (test has-header/nil-primary-value-contains-all-rows
-  "read-csv with has-header nil returns all rows as primary value"
-  (multiple-value-bind (rows header)
-      (cl-csv:read-csv (with-crlf "Alice,30" "Bob,25") :has-header nil)
+  "parse-csv with has-header nil returns all rows as primary value"
+  (destructuring-bind (header &rest rows)
+      (cl-csv:parse-csv (with-crlf "Alice,30" "Bob,25") :has-header nil)
     (declare (ignore header))
     (is (equal '(("Alice" "30") ("Bob" "25")) rows))))
 
 ;;; Empty input — has-header t, no rows → second value is nil.
 (test has-header/empty-input
-  "read-csv on empty input with has-header t returns nil for both values"
-  (multiple-value-bind (rows header)
-      (cl-csv:read-csv "" :has-header t)
+  "parse-csv on empty input with has-header t returns nil for both values"
+  (destructuring-bind (header &rest rows)
+      (cl-csv:parse-csv "" :has-header t)
     (is (null rows))
     (is (null header))))
 
 ;;; Single row (header only) — has-header t, data rows are empty.
 (test has-header/single-row-is-header
-  "read-csv on a single-row CSV returns empty data rows and that row as header"
-  (multiple-value-bind (rows header)
-      (cl-csv:read-csv "col1,col2,col3" :has-header t)
+  "parse-csv on a single-row CSV returns empty data rows and that row as header"
+  (destructuring-bind (header &rest rows)
+      (cl-csv:parse-csv "col1,col2,col3" :has-header t)
     (is (null rows))
     (is (equal '("col1" "col2" "col3") header))))
 
@@ -455,26 +447,26 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
 (test has-header/write-csv-no-header
   "write-csv without :headers writes data rows only"
   (is (string= (cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil)
-               (crlf "Alice,30" "Bob,25"))))
+	       (crlf "Alice,30" "Bob,25"))))
 
 ;;; write-csv with headers list prepends the header row.
 (test has-header/write-csv-prepends-header
   "write-csv with :headers list prepends it as the first row"
   (is (string= (cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil
-                                 :headers '("name" "age"))
-               (crlf "name,age" "Alice,30" "Bob,25"))))
+				 :headers '("name" "age"))
+	       (crlf "name,age" "Alice,30" "Bob,25"))))
 
 ;;; write-csv with headers nil produces no header row.
 (test has-header/write-csv-nil-no-header-line
   "write-csv with :headers nil produces no header row"
   (is (string= (cl-csv:write-csv '(("a" "b")) nil :headers nil)
-               (crlf "a,b"))))
+	       (crlf "a,b"))))
 
 ;;; write-csv with headers honours quoting options.
 (test has-header/write-csv-header-quoting
   "write-csv quotes header fields that contain special characters"
   (let ((output (cl-csv:write-csv '(("1" "2")) nil
-                                  :headers '("col,a" "col b"))))
+				  :headers '("col,a" "col b"))))
     (is-true (search "\"col,a\"" output))))
 
 
@@ -491,15 +483,16 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
 (test sax-parser/default-header-events
   "parse-csv emits begin/header/line/end events when headers are enabled"
   (is (equal '((:begin-document nil)
-               (:header ("name" "age"))
-               (:line ("Alice" "30"))
-               (:line ("Bob" "25"))
-               (:end-document nil))
-             (collect-parse-csv-events (with-crlf "name,age" "Alice,30" "Bob,25")))))
+	       (:header ("name" "age"))
+	       (:line ("Alice" "30"))
+	       (:line ("Bob" "25"))
+	       (:end-document nil))
+	     (cl-csv:parse-csv (with-crlf "name,age" "Alice,30" "Bob,25")
+			       :parser (make-instance 'recording-csv-parser)))))
 
 (test sax-parser/default-parser-return-value
   "parse-csv without an explicit parser returns rows and header"
-  (multiple-value-bind (rows header)
+  (destructuring-bind (header &rest rows)
       (cl-csv:parse-csv (with-crlf "name,age" "Alice,30" "Bob,25"))
     (is (equal '(("Alice" "30") ("Bob" "25")) rows))
     (is (equal '("name" "age") header))))
@@ -507,32 +500,27 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
 (test sax-parser/no-header-events
   "parse-csv emits only line events for rows when has-header is nil"
   (is (equal '((:begin-document nil)
-               (:line ("name" "age"))
-               (:line ("Alice" "30"))
-               (:end-document nil))
-              (collect-parse-csv-events (with-crlf "name,age" "Alice,30")
-                                        :has-header nil))))
-
-(test sax-parser/function-parser-return-value
-  "parse-csv with a function parser preserves the NIL return value"
-  (is (null (cl-csv:parse-csv (with-crlf "name,age" "Alice,30")
-                              (lambda (event payload)
-                                (declare (ignore event payload)))))))
+	       (:line ("name" "age"))
+	       (:line ("Alice" "30"))
+	       (:end-document nil))
+	     (cl-csv:parse-csv (with-crlf "name,age" "Alice,30")
+			       :parser (make-instance 'recording-csv-parser)
+			       :has-header nil))))
 
 (test sax-parser/custom-parser-instance
   "parse-csv accepts custom CSV-PARSER implementations"
   (let ((parser (make-instance 'recording-csv-parser)))
     (is (equal '((:begin-document nil)
-                 (:header ("name" "age"))
-                 (:line ("Alice" "30"))
-                 (:end-document nil))
-               (cl-csv:parse-csv (with-crlf "name,age" "Alice,30") parser)))))
+		 (:header ("name" "age"))
+		 (:line ("Alice" "30"))
+		 (:end-document nil))
+	       (cl-csv:parse-csv (with-crlf "name,age" "Alice,30") :parser parser)))))
 
 (test sax-parser/empty-input
   "parse-csv still emits document boundary events on empty input"
   (is (equal '((:begin-document nil)
-               (:end-document nil))
-             (collect-parse-csv-events ""))))
+	       (:end-document nil))
+	     (cl-csv:parse-csv "" :parser (make-instance 'recording-csv-parser)))))
 
 
 ;;; -----------------------------------------------------------------------

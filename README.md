@@ -7,7 +7,7 @@ A CSV reader and writer for Common Lisp, conforming to
 ## Loading
 
 ```lisp
-(ql:quickload :cl-csv)
+(ql:quickload :io.github.cl-sdk.csv)
 ```
 
 ## Running Tests
@@ -17,7 +17,8 @@ The test suite uses the
 
 ```lisp
 ;; From the REPL, with the project root in ASDF's search path:
-(asdf:test-system :cl-csv)
+(ql:quickload :io.github.cl-sdk.csv.test)
+(fiveam:run-all-tests)
 ```
 
 Or from a shell:
@@ -26,8 +27,9 @@ Or from a shell:
 sbcl --noinform \
      --eval '(require :asdf)' \
      --eval '(push #P"/path/to/cl-csv/" asdf:*central-registry*)' \
-     --eval '(asdf:test-system :cl-csv)' \
-     --eval '(exit)'
+     --eval '(asdf:load-system :io.github.cl-sdk.csv.test)' \
+     --eval '(unless (fiveam:run-all-tests) (uiop:quit -1))' \
+     --eval '(uiop:quit)'
 ```
 
 ## CLI: CSV to s-expressions
@@ -68,13 +70,13 @@ Read one row from a stream:
 
 ```lisp
 (with-input-from-string (s "a,b,c")
-  (cl-csv:read-csv-row s))
+  (io.github.cl-sdk.csv:read-csv-row s))
 ; => ("a" "b" "c")
 ```
 
 ```lisp
 ;; Default: file has a header — header returned as second value, excluded from rows
-(cl-csv:read-csv "name,age
+(io.github.cl-sdk.csv:read-csv "name,age
 Alice,30
 Bob,25")
 ; primary  => (("Alice" "30") ("Bob" "25"))
@@ -82,7 +84,7 @@ Bob,25")
 
 ;; Convenient destructuring with multiple-value-bind
 (multiple-value-bind (rows header)
-    (cl-csv:read-csv "name,age
+    (io.github.cl-sdk.csv:read-csv "name,age
 Alice,30
 Bob,25")
   (format t "Header: ~a~%" header)
@@ -92,7 +94,7 @@ Bob,25")
 
 ;; File has no header — second value is nil, all rows are data
 (multiple-value-bind (rows header)
-    (cl-csv:read-csv "Alice,30
+    (io.github.cl-sdk.csv:read-csv "Alice,30
 Bob,25" :has-header nil)
   (format t "Header: ~a~%" header)
   (format t "Data:   ~a~%" rows))
@@ -103,7 +105,7 @@ Bob,25" :has-header nil)
 Stream rows as events instead of materializing the full table:
 
 ```lisp
-(cl-csv:parse-csv "name,age
+(io.github.cl-sdk.csv:parse-csv "name,age
 Alice,30
 Bob,25"
   (lambda (event payload)
@@ -119,28 +121,28 @@ Omit the parser argument to use the default collecting parser:
 
 ```lisp
 (multiple-value-bind (rows header)
-    (cl-csv:parse-csv "name,age
+    (io.github.cl-sdk.csv:parse-csv "name,age
 Alice,30
 Bob,25")
   (list rows header))
 ; => ((("Alice" "30") ("Bob" "25")) ("name" "age"))
 ```
 
-Custom parser implementations can subclass `cl-csv:csv-parser` and define the
+Custom parser implementations can subclass `io.github.cl-sdk.csv:csv-parser` and define the
 event callbacks they care about:
 
 ```lisp
-(defclass counting-parser (cl-csv:csv-parser)
+(defclass counting-parser (io.github.cl-sdk.csv:csv-parser)
   ((lines :initform 0 :accessor lines)))
 
-(defmethod cl-csv:csv-parser-line ((parser counting-parser) row)
+(defmethod io.github.cl-sdk.csv:csv-parser-line ((parser counting-parser) row)
   (declare (ignore row))
   (incf (lines parser)))
 
-(defmethod cl-csv:csv-parser-result ((parser counting-parser))
+(defmethod io.github.cl-sdk.csv:csv-parser-result ((parser counting-parser))
   (lines parser))
 
-(cl-csv:parse-csv "name,age
+(io.github.cl-sdk.csv:parse-csv "name,age
 Alice,30
 Bob,25"
                   (make-instance 'counting-parser))
@@ -154,7 +156,7 @@ Bob,25"
 Write a single row:
 
 ```lisp
-(cl-csv:write-csv-row '("Alice" "30") *standard-output*)
+(io.github.cl-sdk.csv:write-csv-row '("Alice" "30") *standard-output*)
 ; prints: Alice,30\r\n
 ```
 
@@ -167,11 +169,11 @@ Write all rows to output:
 
 ```lisp
 ;; No header (default) — rows are plain data
-(cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil)
+(io.github.cl-sdk.csv:write-csv '(("Alice" "30") ("Bob" "25")) nil)
 ; => "Alice,30\r\nBob,25\r\n"
 
 ;; With a header passed explicitly
-(cl-csv:write-csv '(("Alice" "30") ("Bob" "25")) nil
+(io.github.cl-sdk.csv:write-csv '(("Alice" "30") ("Bob" "25")) nil
                   :headers '("name" "age"))
 ; => "name,age\r\nAlice,30\r\nBob,25\r\n"
 ```
@@ -179,14 +181,14 @@ Write all rows to output:
 Force quoting:
 
 ```lisp
-(cl-csv:write-csv '(("a" "b")) nil :always-quote t)
+(io.github.cl-sdk.csv:write-csv '(("a" "b")) nil :always-quote t)
 ; => "\"a\",\"b\"\r\n"
 ```
 
 Use tab as separator (TSV):
 
 ```lisp
-(cl-csv:write-csv '(("a" "b")) nil :separator #\Tab)
+(io.github.cl-sdk.csv:write-csv '(("a" "b")) nil :separator #\Tab)
 ; => "a\tb\r\n"
 ```
 
@@ -206,10 +208,10 @@ http://example.com/data.csv#cell=1-2,3-4
 Parse RFC 7111 fragment strings:
 
 ```lisp
-(cl-csv:parse-fragment "row=1,3-5")
+(io.github.cl-sdk.csv:parse-fragment "row=1,3-5")
 ; => ((:TYPE :ROW :POSITIONS ((1 . 1) (3 . 5))))
 
-(cl-csv:parse-fragment "col=2-4;row=1")
+(io.github.cl-sdk.csv:parse-fragment "col=2-4;row=1")
 ; => ((:TYPE :COL :POSITIONS ((2 . 4)))
 ;     (:TYPE :ROW :POSITIONS ((1 . 1))))
 ```
@@ -224,15 +226,15 @@ Apply fragment identifiers to parsed CSV tables (row and column numbers are 1-ba
     ("Carol" "35" "SF")))
 
 ;; Select rows 1 and 3
-(cl-csv:select-by-fragment *table* "row=1,3")
+(io.github.cl-sdk.csv:select-by-fragment *table* "row=1,3")
 ; => (("Alice" "30" "NY") ("Carol" "35" "SF"))
 
 ;; Select column 1 (name) for all rows, keeping the header
-(cl-csv:select-by-fragment *table* "col=1" :include-header t)
+(io.github.cl-sdk.csv:select-by-fragment *table* "col=1" :include-header t)
 ; => (("name") ("Alice") ("Bob") ("Carol"))
 
 ;; Select a specific cell range
-(cl-csv:select-by-fragment *table* "cell=1-1,2-2")
+(io.github.cl-sdk.csv:select-by-fragment *table* "cell=1-1,2-2")
 ; => (("Alice" "" "") ("" "25" ""))
 ```
 

@@ -36,7 +36,7 @@ sbcl --noinform \
 Build a standalone executable:
 
 ```sh
-ros run --noinform \
+ros run sbcl --noinform \
     --eval '(require :asdf)' \
     --eval '(push #P"/path/to/cl-csv/" asdf:*central-registry*)' \
     --eval '(asdf:operate (quote asdf:program-op) :cl-csv.cli)' \

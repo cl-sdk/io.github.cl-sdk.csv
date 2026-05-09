@@ -15,7 +15,10 @@
     ((or (null arg) (string= arg "-"))
      (read-csv stdin))
     (t
-     (read-csv (pathname arg)))))
+     (handler-case
+         (read-csv (pathname arg))
+       (error (e)
+         (error "Cannot read file ~S: ~A" arg e))))))
 
 (defun run (argv &key
                    (stdin *standard-input*)

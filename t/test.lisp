@@ -426,3 +426,13 @@ When TRAILING-CRLF is non-NIL, append a final CRLF after the last string."
     (is (= 2 (cl-csv.cli:run '("a.csv" "b.csv") :stdout out :stderr err)))
     (is (string= "" (get-output-stream-string out)))
     (is-true (search "Usage: cl-csv-dump" (get-output-stream-string err)))))
+
+(test cli/missing-file
+  "CLI reports a clear message for unreadable input files."
+  (let ((out (make-string-output-stream))
+        (err (make-string-output-stream)))
+    (is (= 1 (cl-csv.cli:run '("definitely-not-a-real-file.csv")
+                             :stdout out
+                             :stderr err)))
+    (is (string= "" (get-output-stream-string out)))
+    (is-true (search "Cannot read file" (get-output-stream-string err)))))
